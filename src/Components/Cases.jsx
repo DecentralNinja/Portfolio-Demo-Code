@@ -74,32 +74,25 @@ const Cases = () => {
       duration: 1.2,
       ease,
       onComplete: () => {
-        setCurrentIndex((prev) => {
-          let newCurrent = dir === "next"
-              ? (prev + 1) % cases.length
-              : (prev - 1 + cases.length) % cases.length;
+        // Calculate new indices
+        const newCurrent = dir === "next"
+          ? (currentIndex + 1) % cases.length
+          : (currentIndex - 1 + cases.length) % cases.length;
 
-          setNextIndex(
-            dir === "next"
-              ? (newCurrent + 1) % cases.length
-              : (newCurrent - 1 + cases.length) % cases.length
-          );
+        const newNext = dir === "next"
+          ? (newCurrent + 1) % cases.length
+          : (newCurrent - 1 + cases.length) % cases.length;
 
-          setClipIndex(newCurrent);
+        // Update background color
+        document.body.style.backgroundColor = cases[newCurrent].bgColor;
 
-          // setTimeout(() => {
-          //   if (dir === "next") {
-          //     setClipIndex((newCurrent + 1) % cases.length);
-          //   } else {
-          //     setClipIndex(newCurrent);
-          //   }
-          // }, 0);
-
-          document.body.style.backgroundColor = cases[newCurrent].bgColor;
-          return newCurrent;
-        });
-
+        // Update all states in proper sequence
+        setCurrentIndex(newCurrent);
+        setNextIndex(newNext);
+        setClipIndex(newCurrent);
         setIsAnimating(false);
+        setDirection(null); // Reset direction immediately when animation completes
+        
         setupEventListeners();
       },
     });
@@ -139,7 +132,7 @@ const Cases = () => {
 
           if (direction === null) {
             if (i === currentIndex) {
-
+              // Current active case - no additional classes
             } else if (i === (currentIndex + 1) % cases.length) {
               caseClasses += " case__clip";
             } else {
@@ -148,18 +141,24 @@ const Cases = () => {
           }
 
           else if (direction === "next") {
+            // During upward scroll animation (next case comes from below)
             if (i === currentIndex) {
-
-             } else if (i === (currentIndex + 1) % cases.length) {
-                caseClasses += " case__clip";
-              }  else {
+              // Current case that's being replaced - stays visible during animation
+            } else if (i === (currentIndex + 1) % cases.length) {
+              // The next case coming into view from below - apply clip animation
+              caseClasses += " case__clip";
+            } else {
               caseClasses += " case__hide";
             }
           } 
 
           else if (direction === "prev") {
+            // During downward scroll animation
             if (i === currentIndex) {
+              // Current case gets clipped during prev animation
               caseClasses += " case__clip";
+            } else if (i === (currentIndex - 1 + cases.length) % cases.length) {
+              // Previous case coming into view - no additional classes
             } else {
               caseClasses += " case__hide";
             }
