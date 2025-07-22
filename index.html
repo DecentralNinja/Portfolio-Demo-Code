@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Vite + React</title>
+  </head>
+  <body class="preload">
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+  <script>
+  document.addEventListener('DOMContentLoaded', () => {
+    // Remove preload class after everything is ready
+    setTimeout(() => {
+      document.body.classList.remove('preload');
+      // Force a repaint to ensure animations trigger
+      requestAnimationFrame(() => {
+        document.body.offsetHeight;
+      });
+    }, 100);
+  });
+</script>
+</html>

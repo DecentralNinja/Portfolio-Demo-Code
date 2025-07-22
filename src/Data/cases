@@ -1,0 +1,317 @@
+const cases = [
+  {
+    id: "1",
+    title: "TripFlow",
+    origTitle: "TripFlow",
+    description: "A smart travel assistant app that simplifies planning and exploring.",
+    textColor: "white",
+    bgColor: "#ed472f",
+    bgColorSecondary: "#ed472f",
+    isContrastColor: false,
+    image: "/PortfolioPics/Proj-1/trip.jpeg",
+    overviewHeader: "/PortfolioPics/Proj-1/trip-overview.jpeg",
+    dotImage: "/PortfolioPics/Proj-1/trip-overview.jpeg",
+    components: [
+      {
+        id: "CaseTitle",
+        title: "TRIPFLOW"
+      },
+      {
+        id: "CaseHeader",
+        imgSrc: "/PortfolioPics/Proj-1/trip.jpeg",
+        imgAlt: "TripFlow"
+      },
+      {
+        id: "CaseInfo",
+        subtitle: "Project info",
+        intro: "TripFlow simplifies your travel planning with AI-based recommendations and smart itineraries.",
+        client: "Personal Project",
+        clientLink: "#",
+        agency: "Freelance",
+        agencyLink: "#",
+        awards: ["Best UX Nominee"],
+        techniques: ["React", "Redux", "GSAP", "SCSS"]
+      },
+      {
+        id: "CaseTextColumn",
+        subtitle: "My Role",
+        paragraph: "I designed and developed the entire application including animations, navigation, and content structure using modern frontend technologies."
+      }
+    ]
+  },
+  {
+    id: "2",
+    title: "Topsport Amsterdam",
+    origTitle: "Topsport Amsterdam",
+    description: "An athletic event platform for promoting high-performance sports in the city.",
+    textColor: "white",
+    bgColor: "#1a1a1a",
+    bgColorSecondary: "#1a1a1a",
+    isContrastColor: false,
+    image: "/PortfolioPics/Proj-2/bg-test.png",
+    overviewHeader: "/PortfolioPics/Proj-2/bg-test.png",
+    dotImage: "/PortfolioPics/Proj-2/bg-test.png",
+    components: [
+      {
+        id: "CaseTitle",
+        title: "TOPSPORT AMSTERDAM"
+      },
+      {
+        id: "CaseHeader",
+        imgSrc: "/PortfolioPics/Proj-2/bg-test.png",
+        imgAlt: "Topsport Amsterdam"
+      },
+      {
+        id: "CaseInfo",
+        subtitle: "Project info",
+        intro: "Platform for highlighting events, athletes, and sports initiatives in Amsterdam.",
+        client: "Topsport Amsterdam",
+        clientLink: "#",
+        agency: "Freelance",
+        agencyLink: "#",
+        techniques: ["VueJS", "GSAP", "SCSS"]
+      },
+      {
+        id: "CaseTextColumn",
+        subtitle: "My Role",
+        paragraph: "I handled all frontend development, including animation, page transitions, and CMS integration."
+      }
+    ]
+  },
+  {
+    id: "3",
+    title: "DeckBloom",
+    origTitle: "DeckBloom",
+    description: "A platform to create stunning pitch decks for startups and investors.",
+    textColor: "black",
+    bgColor: "#f9e7dc",
+    bgColorSecondary: "#f9e7dc",
+    isContrastColor: true,
+    image: "/PortfolioPics/Proj-3/deckbloom.jpg",
+    overviewHeader: "/PortfolioPics/Proj-3/deckbloom-overview.jpg",
+    dotImage: "/PortfolioPics/Proj-3/deckbloom-dot.jpg",
+    components: [
+      {
+        id: "CaseTitle",
+        title: "DECKBLOOM"
+      },
+      {
+        id: "CaseHeader",
+        imgSrc: "/PortfolioPics/Proj-3/deckbloom.jpg",
+        imgAlt: "DeckBloom"
+      },
+      {
+        id: "CaseInfo",
+        subtitle: "Project info",
+        intro: "DeckBloom enables fast, beautiful, and effective pitch deck creation for entrepreneurs and small teams.",
+        client: "DeckBloom",
+        clientLink: "#",
+        agency: "Self-Owned",
+        agencyLink: "#",
+        techniques: ["React", "Framer Motion", "Tailwind CSS"]
+      },
+      {
+        id: "CaseTextColumn",
+        subtitle: "My Role",
+        paragraph: "I led the entire product design and development lifecycle, from UX wireframes to final animations and deployment."
+      }
+    ]
+  },
+  {
+    id: "4",
+    title: "SkillSpire",
+    origTitle: "SkillSpire",
+    description: "An interactive learning platform for upskilling professionals in tech.",
+    textColor: "white",
+    bgColor: "#342a5b",
+    bgColorSecondary: "#3d2f6e",
+    isContrastColor: false,
+    image: "/PortfolioPics/Proj-4/skillspire.jpg",
+    overviewHeader: "/PortfolioPics/Proj-4/skillspire-overview.jpg",
+    dotImage: "/PortfolioPics/Proj-4/skillspire-dot.jpg",
+    components: [
+      {
+        id: "CaseTitle",
+        title: "SKILLSPIRE"
+      },
+      {
+        id: "CaseHeader",
+        imgSrc: "/PortfolioPics/Proj-4/skillspire.jpg",
+        imgAlt: "SkillSpire"
+      },
+      {
+        id: "CaseInfo",
+        subtitle: "Project info",
+        intro: "SkillSpire offers curated tech courses with project-based modules and career support tools.",
+        client: "Startup Client",
+        clientLink: "#",
+        agency: "Contract",
+        agencyLink: "#",
+        techniques: ["Next.js", "TypeScript", "Styled Components"]
+      },
+      {
+        id: "CaseTextColumn",
+        subtitle: "My Role",
+        paragraph: "Built the frontend architecture, learning modules, and integrated analytics and authentication."
+      }
+    ]
+  },
+  {
+    id: "5",
+    title: "CultureCraft",
+    origTitle: "CultureCraft",
+    description: "A digital storytelling site showcasing cultural heritage across continents.",
+    textColor: "black",
+    bgColor: "#f0eae2",
+    bgColorSecondary: "#dcd6cc",
+    isContrastColor: true,
+    image: "/PortfolioPics/Proj-5/culturecraft.jpg",
+    overviewHeader: "/PortfolioPics/Proj-5/culturecraft-overview.jpg",
+    dotImage: "/PortfolioPics/Proj-5/culturecraft-dot.jpg",
+    components: [
+      {
+        id: "CaseTitle",
+        title: "CULTURECRAFT"
+      },
+      {
+        id: "CaseHeader",
+        imgSrc: "/PortfolioPics/Proj-5/culturecraft.jpg",
+        imgAlt: "CultureCraft"
+      },
+      {
+        id: "CaseInfo",
+        subtitle: "Project info",
+        intro: "CultureCraft captures and presents untold stories of traditions, crafts, and communities using immersive media.",
+        client: "NGO Collaboration",
+        clientLink: "#",
+        agency: "Freelance",
+        agencyLink: "#",
+        techniques: ["Vue 3", "GSAP", "Contentful"]
+      },
+      {
+        id: "CaseTextColumn",
+        subtitle: "My Role",
+        paragraph: "Created immersive animations, CMS integration, and dynamic narrative structures using Vue 3 and GSAP."
+      }
+    ]
+  },
+  {
+    id: "6",
+    title: "FinWell",
+    origTitle: "FinWell",
+    description: "A fintech dashboard providing real-time insights into personal finance and investments.",
+    textColor: "white",
+    bgColor: "#123c69",
+    bgColorSecondary: "#0f2e52",
+    isContrastColor: false,
+    image: "/PortfolioPics/Proj-6/finwell.jpg",
+    overviewHeader: "/PortfolioPics/Proj-6/finwell-overview.jpg",
+    dotImage: "/PortfolioPics/Proj-6/finwell-dot.jpg",
+    components: [
+      {
+        id: "CaseTitle",
+        title: "FINWELL"
+      },
+      {
+        id: "CaseHeader",
+        imgSrc: "/PortfolioPics/Proj-6/finwell.jpg",
+        imgAlt: "FinWell"
+      },
+      {
+        id: "CaseInfo",
+        subtitle: "Project info",
+        intro: "A data-driven platform helping users manage spending, track goals, and receive smart financial tips.",
+        client: "FinTech Startup",
+        clientLink: "#",
+        agency: "Agency Project",
+        agencyLink: "#",
+        techniques: ["React", "D3.js", "Tailwind CSS", "Chart.js"]
+      },
+      {
+        id: "CaseTextColumn",
+        subtitle: "My Role",
+        paragraph: "Engineered dynamic data visualizations and responsive interfaces with advanced charting libraries."
+      }
+    ]
+  },
+  {
+    id: "7",
+    title: "GreenNest",
+    origTitle: "GreenNest",
+    description: "Eco-living eCommerce site promoting sustainable products with rich storytelling.",
+    textColor: "black",
+    bgColor: "#e3f5d8",
+    bgColorSecondary: "#cfeac3",
+    isContrastColor: true,
+    image: "/PortfolioPics/Proj-7/greennest.jpg",
+    overviewHeader: "/PortfolioPics/Proj-7/greennest-overview.jpg",
+    dotImage: "/PortfolioPics/Proj-7/greennest-dot.jpg",
+    components: [
+      {
+        id: "CaseTitle",
+        title: "GREENNEST"
+      },
+      {
+        id: "CaseHeader",
+        imgSrc: "/PortfolioPics/Proj-7/greennest.jpg",
+        imgAlt: "GreenNest"
+      },
+      {
+        id: "CaseInfo",
+        subtitle: "Project info",
+        intro: "GreenNest blends nature and tech to offer eco-friendly products and carbon-neutral shipping.",
+        client: "GreenNest",
+        clientLink: "#",
+        agency: "Self-Owned",
+        agencyLink: "#",
+        techniques: ["Next.js", "GSAP", "Headless CMS", "Stripe API"]
+      },
+      {
+        id: "CaseTextColumn",
+        subtitle: "My Role",
+        paragraph: "Developed seamless product browsing experience, implemented headless eCommerce, and built custom animations."
+      }
+    ]
+  },
+  {
+    id: "8",
+    title: "MuseMate",
+    origTitle: "MuseMate",
+    description: "An AI-powered music companion that suggests playlists and mood-based tracks.",
+    textColor: "white",
+    bgColor: "#4b2e83",
+    bgColorSecondary: "#341c5e",
+    isContrastColor: false,
+    image: "/PortfolioPics/Proj-8/musemate.jpg",
+    overviewHeader: "/PortfolioPics/Proj-8/musemate-overview.jpg",
+    dotImage: "/PortfolioPics/Proj-8/musemate-dot.jpg",
+    components: [
+      {
+        id: "CaseTitle",
+        title: "MUSEMATE"
+      },
+      {
+        id: "CaseHeader",
+        imgSrc: "/PortfolioPics/Proj-8/musemate.jpg",
+        imgAlt: "MuseMate"
+      },
+      {
+        id: "CaseInfo",
+        subtitle: "Project info",
+        intro: "MuseMate learns your moods and generates smart playlists based on sentiment, activity, and weather.",
+        client: "Hackathon Project",
+        clientLink: "#",
+        agency: "Team Collaboration",
+        agencyLink: "#",
+        techniques: ["Vue 3", "GSAP", "Spotify API", "TensorFlow.js"]
+      },
+      {
+        id: "CaseTextColumn",
+        subtitle: "My Role",
+        paragraph: "Handled UI animations, user flow logic, and implemented AI integration with real-time mood detection."
+      }
+    ]
+  }
+];
+
+export default cases;

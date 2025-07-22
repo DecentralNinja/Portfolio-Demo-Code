@@ -1,0 +1,92 @@
+@mixin backImage($image, $grDir: to bottom, $opStart: 0, $opEnd: 0, $bgPos: center center) {
+    background: linear-gradient($grDir, rgba(0, 0, 0, $opStart), rgba(0, 0, 0, $opEnd)), url($image);
+    background-repeat: no-repeat;
+    background-position: $bgPos;
+    -webkit-background-size: cover;
+    -moz-background-size: cover;
+    -o-background-size: cover;
+    background-size: cover;
+}
+
+@mixin boxsizing {
+     box-sizing: border-box;
+}
+
+@mixin clearfix {
+    &:before,
+    &:after {
+        content: '';
+        display: table;
+    }
+
+    &:after {
+        clear: both;
+    }
+}
+
+
+@mixin input-placeholder {
+  ::-webkit-input-placeholder {@content}
+  :-moz-placeholder           {@content}
+  ::-moz-placeholder          {@content}
+  :-ms-input-placeholder      {@content}  
+}
+
+@mixin border-radius($pixel...) {
+  border-radius: $pixel;
+}
+
+@mixin text-shadow($params) {
+  -webkit-box-shadow: $params;
+  -moz-box-shadow: $params;
+  box-shadow: $params;
+}
+
+@mixin box-shadow($params) {
+  -webkit-box-shadow: $params;
+  -moz-box-shadow: $params;
+  box-shadow: $params;
+}
+
+
+@media screen {
+  
+}
+
+
+@mixin breakpoint($point) {
+
+  @if $point == mobiles {
+    @media (max-width: 406px) { @content; }
+  }
+  @else if $point == MobileScreen2 {
+    @media (max-width: 390px) { @content; }
+  }
+  @else if $point == MobileScreen1 {
+    @media (max-width: 440px) { @content; }
+  }
+  @else if $point == TabletScreen1 {
+    @media (max-width: 1024px) { @content; }
+  }
+   @else if $point == DesktopScreen3 {
+    @media (max-width: 1366px) { @content; }
+  }
+  @else if $point == DesktopScreen2 {
+    @media (max-width: 1440px) { @content; }
+  }
+  @else if $point == DesktopScreen1 {
+    @media (max-width: 1660px) { @content; }
+  }
+  @else if $point == DesktopScreening1 {
+    @media (max-width: 1820px) { @content; }
+  }
+
+
+  // 🔽 New height-based breakpoints
+  @else if $point == ShortScreen1 {
+    @media (max-height: 821px) { @content; }
+  }
+  @else if $point == ShortScreen2 {
+    @media (max-height: 650px) { @content; }
+  }
+}
