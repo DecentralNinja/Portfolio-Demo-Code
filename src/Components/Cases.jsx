@@ -55,11 +55,6 @@ const Cases = () => {
 
     const ease = "expo.inOut";
 
-    // Calculate the new current index before starting animation
-    const newCurrentIndex = dir === "next"
-      ? (currentIndex + 1) % cases.length
-      : (currentIndex - 1 + cases.length) % cases.length;
-
     gsap.set(".shape", {
       attr: {
         d:
@@ -79,21 +74,28 @@ const Cases = () => {
       duration: 1.2,
       ease,
       onComplete: () => {
-        // Update currentIndex to the pre-calculated value
-        setCurrentIndex(newCurrentIndex);
-        
-        // Set nextIndex based on the new current index
-        setNextIndex(
-          dir === "next"
-            ? (newCurrentIndex + 1) % cases.length
-            : (newCurrentIndex - 1 + cases.length) % cases.length
-        );
+        setCurrentIndex((prevCurrent) => {
+          const newCurrent = dir === "next"
+            ? (prevCurrent + 1) % cases.length
+            : (prevCurrent - 1 + cases.length) % cases.length;
 
-        setClipIndex(newCurrentIndex);
+          // Update background color
+          document.body.style.backgroundColor = cases[newCurrent].bgColor;
+          
+          return newCurrent;
+        });
 
-        // Update background color
-        document.body.style.backgroundColor = cases[newCurrentIndex].bgColor;
+        setNextIndex((prevNext) => {
+          const currentAfterUpdate = dir === "next"
+            ? (currentIndex + 1) % cases.length
+            : (currentIndex - 1 + cases.length) % cases.length;
+          
+          return dir === "next"
+            ? (currentAfterUpdate + 1) % cases.length
+            : (currentAfterUpdate - 1 + cases.length) % cases.length;
+        });
 
+        setDirection(null);
         setIsAnimating(false);
         setupEventListeners();
       },
@@ -142,10 +144,10 @@ const Cases = () => {
             }
           }
           else if (direction === "next") {
-            if (i === currentIndex) {
-              // Current case during next animation - no additional class
-            } else if (i === nextIndex) {
+            if (i === (currentIndex + 1) % cases.length) {
               caseClasses += " case__clip";
+            } else if (i === currentIndex) {
+              // Current case during next animation - keep visible but behind clip
             } else {
               caseClasses += " case__hide";
             }
@@ -153,8 +155,8 @@ const Cases = () => {
           else if (direction === "prev") {
             if (i === currentIndex) {
               caseClasses += " case__clip";
-            } else if (i === nextIndex) {
-              // Next case during prev animation - no additional class
+            } else if (i === (currentIndex - 1 + cases.length) % cases.length) {
+              // Previous case during prev animation - no additional class
             } else {
               caseClasses += " case__hide";
             }
@@ -174,7 +176,13 @@ const Cases = () => {
                   project={item}
                   isActive={i === currentIndex}
                   isAnimating={isAnimating}
-                  isNextItem={i === nextIndex}
+                  isNextItem={
+                    direction === "next"
+                      ? i === (currentIndex + 1) % cases.length
+                      : direction === "prev"
+                      ? i === (currentIndex - 1 + cases.length) % cases.length
+                      : false
+                  }
                   direction={direction}
                   addClip={caseClasses.includes("case__clip")}
                   index={i}
