@@ -34,7 +34,7 @@ const CaseImageDisplay = ({
     if (isActive) {
       // Set initial state for active case image
       gsap.to(imageRef.current, {
-        yPercent: -150,
+        yPercent: 0,
         rotate: 2,
         ease: "expo.inOut",
         duration: 1.7
@@ -50,7 +50,7 @@ const CaseImageDisplay = ({
       if (direction === "next") {
         // Moving up (next case comes from below)
         gsap.to(imageRef.current, {
-          yPercent: -235,
+          yPercent: -105,
           rotate: -5,
           ease: "expo.inOut",
           duration: 1.7,
