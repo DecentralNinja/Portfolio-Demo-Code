@@ -7,16 +7,16 @@ import { Z_INDEX } from '../Components/zIndex';
 
 const Cases = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [nextIndex, setNextIndex] = useState(1);
   const [direction, setDirection] = useState(null);
   const [isAnimating, setIsAnimating] = useState(false);
   const [touchStartY, setTouchStartY] = useState(0);
-  const [clipIndex, setClipIndex] = useState(0);
   const wrapperRef = useRef(null);
+  const currentIndexRef = useRef(0); // Add ref to track current index
 
   useEffect(() => {
     document.body.style.backgroundColor = cases[0].bgColor;
     document.documentElement.style.overflow = "hidden";
+    currentIndexRef.current = 0; // Initialize ref
 
     const timeout = setTimeout(() => {
       setupEventListeners();
@@ -27,6 +27,11 @@ const Cases = () => {
       removeEventListeners();
     };
   }, []);
+
+  // Keep ref in sync with state
+  useEffect(() => {
+    currentIndexRef.current = currentIndex;
+  }, [currentIndex]);
 
   const setupEventListeners = () => {
     if (wrapperRef.current) {
@@ -52,8 +57,9 @@ const Cases = () => {
   const animateTransition = (dir) => {
     setIsAnimating(true);
     setDirection(dir);
-
+    
     const ease = "expo.inOut";
+    const currentIdx = currentIndexRef.current;
 
     gsap.set(".shape", {
       attr: {
@@ -74,32 +80,19 @@ const Cases = () => {
       duration: 1.2,
       ease,
       onComplete: () => {
-        setCurrentIndex((prev) => {
-          let newCurrent = dir === "next"
-              ? (prev + 1) % cases.length
-              : (prev - 1 + cases.length) % cases.length;
+        // Calculate new indices
+        const newCurrent = dir === "next"
+          ? (currentIdx + 1) % cases.length
+          : (currentIdx - 1 + cases.length) % cases.length;
 
-          setNextIndex(
-            dir === "next"
-              ? (newCurrent + 1) % cases.length
-              : (newCurrent - 1 + cases.length) % cases.length
-          );
+        // Update background color first
+        document.body.style.backgroundColor = cases[newCurrent].bgColor;
 
-          setClipIndex(newCurrent);
-
-          // setTimeout(() => {
-          //   if (dir === "next") {
-          //     setClipIndex((newCurrent + 1) % cases.length);
-          //   } else {
-          //     setClipIndex(newCurrent);
-          //   }
-          // }, 0);
-
-          document.body.style.backgroundColor = cases[newCurrent].bgColor;
-          return newCurrent;
-        });
-
+        // Update states in a single batch
+        setCurrentIndex(newCurrent);
         setIsAnimating(false);
+        setDirection(null);
+        
         setupEventListeners();
       },
     });
@@ -109,7 +102,9 @@ const Cases = () => {
     e.preventDefault();
     e.stopPropagation();
 
-    if (isAnimating) return;
+    if (isAnimating) {
+      return;
+    }
 
     let isScrollDown = false;
     if (e.type === "wheel") {
@@ -117,7 +112,7 @@ const Cases = () => {
     } else if (e.type === "touchmove" && e.touches && e.touches.length === 1) {
       isScrollDown = e.touches[0].clientY < touchStartY;
     }
-
+    
     animateTransition(isScrollDown ? "next" : "prev");
     removeEventListeners();
   };
@@ -139,7 +134,7 @@ const Cases = () => {
 
           if (direction === null) {
             if (i === currentIndex) {
-
+              // Current active case - no additional classes
             } else if (i === (currentIndex + 1) % cases.length) {
               caseClasses += " case__clip";
             } else {
@@ -148,22 +143,30 @@ const Cases = () => {
           }
 
           else if (direction === "next") {
+            // During upward scroll animation (next case comes from below)
             if (i === currentIndex) {
-
-             } else if (i === (currentIndex + 1) % cases.length) {
-                caseClasses += " case__clip";
-              }  else {
+              // Current case that's being replaced - stays visible during animation
+            } else if (i === (currentIndex + 1) % cases.length) {
+              // The next case coming into view from below - apply clip animation
+              caseClasses += " case__clip";
+            } else {
               caseClasses += " case__hide";
             }
           } 
 
           else if (direction === "prev") {
+            // During downward scroll animation
             if (i === currentIndex) {
+              // Current case gets clipped during prev animation
               caseClasses += " case__clip";
+            } else if (i === (currentIndex - 1 + cases.length) % cases.length) {
+              // Previous case coming into view - no additional classes
             } else {
               caseClasses += " case__hide";
             }
           }
+
+
 
           return (
             <section
