@@ -7,16 +7,16 @@ import { Z_INDEX } from '../Components/zIndex';
 
 const Cases = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [nextIndex, setNextIndex] = useState(1);
   const [direction, setDirection] = useState(null);
   const [isAnimating, setIsAnimating] = useState(false);
   const [touchStartY, setTouchStartY] = useState(0);
-  const [clipIndex, setClipIndex] = useState(0);
   const wrapperRef = useRef(null);
+  const currentIndexRef = useRef(0); // Add ref to track current index
 
   useEffect(() => {
     document.body.style.backgroundColor = cases[0].bgColor;
     document.documentElement.style.overflow = "hidden";
+    currentIndexRef.current = 0; // Initialize ref
 
     const timeout = setTimeout(() => {
       setupEventListeners();
@@ -27,6 +27,11 @@ const Cases = () => {
       removeEventListeners();
     };
   }, []);
+
+  // Keep ref in sync with state
+  useEffect(() => {
+    currentIndexRef.current = currentIndex;
+  }, [currentIndex]);
 
   const setupEventListeners = () => {
     if (wrapperRef.current) {
@@ -52,8 +57,9 @@ const Cases = () => {
   const animateTransition = (dir) => {
     setIsAnimating(true);
     setDirection(dir);
-
+    
     const ease = "expo.inOut";
+    const currentIdx = currentIndexRef.current;
 
     gsap.set(".shape", {
       attr: {
@@ -76,22 +82,16 @@ const Cases = () => {
       onComplete: () => {
         // Calculate new indices
         const newCurrent = dir === "next"
-          ? (currentIndex + 1) % cases.length
-          : (currentIndex - 1 + cases.length) % cases.length;
+          ? (currentIdx + 1) % cases.length
+          : (currentIdx - 1 + cases.length) % cases.length;
 
-        const newNext = dir === "next"
-          ? (newCurrent + 1) % cases.length
-          : (newCurrent - 1 + cases.length) % cases.length;
-
-        // Update background color
+        // Update background color first
         document.body.style.backgroundColor = cases[newCurrent].bgColor;
 
-        // Update all states in proper sequence
+        // Update states in a single batch
         setCurrentIndex(newCurrent);
-        setNextIndex(newNext);
-        setClipIndex(newCurrent);
         setIsAnimating(false);
-        setDirection(null); // Reset direction immediately when animation completes
+        setDirection(null);
         
         setupEventListeners();
       },
@@ -102,7 +102,9 @@ const Cases = () => {
     e.preventDefault();
     e.stopPropagation();
 
-    if (isAnimating) return;
+    if (isAnimating) {
+      return;
+    }
 
     let isScrollDown = false;
     if (e.type === "wheel") {
@@ -110,7 +112,7 @@ const Cases = () => {
     } else if (e.type === "touchmove" && e.touches && e.touches.length === 1) {
       isScrollDown = e.touches[0].clientY < touchStartY;
     }
-
+    
     animateTransition(isScrollDown ? "next" : "prev");
     removeEventListeners();
   };
@@ -163,6 +165,8 @@ const Cases = () => {
               caseClasses += " case__hide";
             }
           }
+
+
 
           return (
             <section
