@@ -64,6 +64,36 @@ const Cases = () => {
   const animateTransition = (dir, targetIdx = null) => {
     setIsAnimating(true);
     setDirection(dir);
+
+    // Calculate new indices immediately and update states to prevent flicker
+    const currentIdx = currentIndexRef.current;
+    let newCurrentIndex;
+    
+    if (dir === "next") {
+      if (targetIdx !== null) {
+        newCurrentIndex = targetIdx;
+      } else {
+        newCurrentIndex = (currentIdx + 1) % cases.length;
+      }
+    } else {
+      if (targetIdx !== null) {
+        newCurrentIndex = targetIdx;
+      } else {
+        newCurrentIndex = (currentIdx - 1 + cases.length) % cases.length;
+      }
+    }
+
+    // Update states immediately to prevent flicker
+    setCurrentIndex(newCurrentIndex);
+    setTargetIndex(newCurrentIndex);
+    if (dir === "next") {
+      setNextIndex((newCurrentIndex + 1) % cases.length);
+    } else {
+      setNextIndex(newCurrentIndex);
+    }
+
+    // Update background color immediately
+    document.body.style.backgroundColor = cases[newCurrentIndex].bgColor;
     
     const ease = "expo.inOut";
 
@@ -86,8 +116,6 @@ const Cases = () => {
       duration: 1.5,
       ease,
       onComplete: () => {
-        setIsAnimating(false);
-        
         // Reset shape for next animation
         gsap.set(".shape", {
           attr: {
@@ -96,40 +124,17 @@ const Cases = () => {
               : "M 0 0 Q 0.5 0 1 0 L 1 1 L 0 1 z"
           },
         });
-
-        let newCurrentIndex;
         
-        if (dir === "next") {
-          if (targetIdx !== null) {
-            newCurrentIndex = targetIdx;
-            setCurrentIndex(targetIdx);
-            setNextIndex((targetIdx + 1) % cases.length);
-          } else {
-            newCurrentIndex = (currentIndexRef.current + 1) % cases.length;
-            setCurrentIndex(newCurrentIndex);
-            setNextIndex((newCurrentIndex + 1) % cases.length);
-          }
-        } else {
-          if (targetIdx !== null) {
-            newCurrentIndex = targetIdx;
-            setCurrentIndex(targetIdx);
-            setNextIndex(targetIdx);
-          } else {
-            newCurrentIndex = (currentIndexRef.current - 1 + cases.length) % cases.length;
-            setCurrentIndex(newCurrentIndex);
-            setNextIndex(newCurrentIndex);
-          }
-        }
-
-        // Update background color
-        document.body.style.backgroundColor = cases[newCurrentIndex].bgColor;
-        
-        setupEventListeners();
+        // Small delay to ensure smooth transition
+        setTimeout(() => {
+          setIsAnimating(false);
+          setupEventListeners();
+        }, 50);
       },
     });
   };
 
-  const handleScroll = (e) => {
+    const handleScroll = (e) => {
     e.preventDefault();
     e.stopPropagation();
 
@@ -143,15 +148,12 @@ const Cases = () => {
     } else if (e.type === "touchmove" && e.touches && e.touches.length === 1) {
       isScrollDown = e.touches[0].clientY < touchStartY;
     }
-    
+
     const currentIdx = currentIndexRef.current;
     
     if (isScrollDown) {
       // Scrolling down (next case)
       if (currentIdx < cases.length - 1) {
-        setDirection("next");
-        setTargetIndex(currentIdx + 1);
-        setNextIndex(currentIdx + 1);
         animateTransition("next");
       } else {
         // Loop to first case
@@ -160,16 +162,13 @@ const Cases = () => {
     } else {
       // Scrolling up (previous case)
       if (currentIdx > 0) {
-        setDirection("prev");
-        setNextIndex(currentIdx);
-        setTargetIndex(currentIdx - 1);
         animateTransition("prev");
       } else {
         // Loop to last case
         jumpToCase(cases.length - 1);
       }
     }
-    
+
     removeEventListeners();
   };
 
@@ -197,16 +196,20 @@ const Cases = () => {
       <div className="page__container">
         <SideBar activeCase={currentIndex} setActiveCase={jumpToCase} style={{ zIndex: Z_INDEX.SIDEBAR }} />
 
-        {cases.map((item, i) => {
+                {cases.map((item, i) => {
           let caseClasses = "case";
 
-          // Apply clip class based on direction and index
-          if (direction === "next" ? i === nextIndex : i === currentIndex) {
+          // Simplified class assignment to prevent flicker
+          if (i === currentIndex) {
+            // Current active case - always visible
+          } else if (i === nextIndex && isAnimating) {
+            // Case coming into view gets clip animation
             caseClasses += " case__clip";
-          }
-          
-          // Apply hide class to non-active cases
-          if (i !== currentIndex && i !== nextIndex && i !== targetIndex) {
+          } else if (!isAnimating && i === (currentIndex + 1) % cases.length) {
+            // Next case ready for clip animation when not animating
+            caseClasses += " case__clip";
+          } else {
+            // All other cases are hidden
             caseClasses += " case__hide";
           }
 
