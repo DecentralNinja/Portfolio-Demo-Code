@@ -226,11 +226,7 @@ const Cases = () => {
                   project={item}
                   isActive={i === currentIndex}
                   isAnimating={isAnimating}
-                  isNextItem={
-                    direction === "next"
-                      ? i === (currentIndex + 1) % cases.length
-                      : i === (currentIndex - 1 + cases.length) % cases.length
-                  }
+                  isNextItem={i === nextIndex || i === targetIndex}
                   direction={direction}
                   addClip={caseClasses.includes("case__clip")}
                   index={i}
