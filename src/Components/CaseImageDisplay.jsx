@@ -10,6 +10,7 @@ const CaseImageDisplay = ({
   isAnimating = false,
   isNextItem = false,
   direction = "next",
+  isPreloaded = false,
 }) => {
   const titleWrapperRef = useRef(null);
   const titleRef = useRef(null);
@@ -19,28 +20,82 @@ const CaseImageDisplay = ({
 
   const hasLineBreak = project.title?.includes('<br/>');
 
-  // Initial setup animations
+  // Initial load animations
   useEffect(() => {
+    if (!titleRef.current || !imageRef.current) return;
+
     if (isActive && index === 0) {
-      // Initial animation for the first case
-      gsap.to(titleRef.current, {
-        y: 0,
-        rotate: 0,
-        ease: "elastic.out(1, 1)",
-        duration: 1.5
+      // Set initial hidden state for first case
+      gsap.set(titleWrapperRef.current, {
+        y: 100,
+        opacity: 0
       });
+      
+      gsap.set(titleRef.current, {
+        y: hasLineBreak ? 550 : 350,
+        opacity: 0
+      });
+      
+      gsap.set(imageRef.current, {
+        yPercent: 50,
+        rotate: 15,
+        opacity: 0
+      });
+    } else if (isActive) {
+      // Set normal state for other active cases
+      gsap.set(titleWrapperRef.current, { y: 0, opacity: 1 });
+      gsap.set(titleRef.current, { y: 0, opacity: 1 });
+      gsap.set(imageRef.current, { yPercent: -150, rotate: 2, opacity: 1 });
+    } else {
+      // Set hidden state for inactive cases
+      gsap.set(titleWrapperRef.current, { opacity: 0 });
+      gsap.set(titleRef.current, { opacity: 0 });
+      gsap.set(imageRef.current, { opacity: 0 });
     }
-    
-    if (isActive) {
-      // Set initial state for active case image
-      gsap.to(imageRef.current, {
+  }, [isActive, index, hasLineBreak]);
+
+  // Trigger entrance animations when preloaded
+  useEffect(() => {
+    if (!isPreloaded || !titleRef.current || !imageRef.current) return;
+
+    if (isActive && index === 0) {
+      // Create entrance timeline
+      const tl = gsap.timeline();
+      
+      // Animate title wrapper first (if it exists)
+      if (titleWrapperRef.current) {
+        gsap.set(titleWrapperRef.current, {
+          y: 100,
+          opacity: 0
+        });
+        
+        tl.to(titleWrapperRef.current, {
+          y: 0,
+          opacity: 1,
+          ease: "expo.out",
+          duration: 1.2,
+          delay: 0.2
+        });
+      }
+
+      // Animate title coming up from bottom
+      tl.to(titleRef.current, {
+        y: 0,
+        opacity: 1,
+        ease: "expo.inOut",
+        duration: 1.5
+      }, "-=0.8");
+
+      // Animate image coming up from bottom to center with rotation
+      tl.to(imageRef.current, {
         yPercent: -150,
         rotate: 2,
+        opacity: 1,
         ease: "expo.inOut",
-        duration: 1.7
-      });
+        duration: 2.2
+      }, "-=1.0");
     }
-  }, [isActive, index]);
+  }, [isPreloaded, isActive, index, hasLineBreak]);
 
   // Animation when cases transition
   useEffect(() => {

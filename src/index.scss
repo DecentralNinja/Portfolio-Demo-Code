@@ -211,7 +211,24 @@ svg { display: block; }
 .page--cases { height: auto; overflow: hidden; position: relative; width: 100vw;}
 .fixed { position: fixed !important; opacity: 1 !important; visibility: visible !important; }
 body.preload [class*="case"],
-body.preload .fixed { animation: none !important; transition: none !important; opacity: 1 !important; }
+body.preload .fixed { animation: none !important; transition: none !important; }
+
+// Initial loading states
+.case__title-wrapper,
+.case__title {
+  will-change: transform, opacity;
+}
+
+.case__img-wrapper {
+  will-change: transform, opacity;
+}
+
+// Prevent flash of unstyled content during load
+body.preload .case__title-wrapper,
+body.preload .case__title,
+body.preload .case__img-wrapper {
+  opacity: 0;
+}
 .transition-ball { transform-origin: center center; will-change: transform, opacity; z-index: 9999; }
 .content-area { position: relative; z-index: 1; }
 .transition-ball { position: fixed; border-radius: 50%; will-change: transform, opacity; z-index: 1001; pointer-events: none; }

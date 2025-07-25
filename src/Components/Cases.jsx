@@ -12,6 +12,7 @@ const Cases = () => {
   const [direction, setDirection] = useState("next");
   const [isAnimating, setIsAnimating] = useState(false);
   const [touchStartY, setTouchStartY] = useState(0);
+  const [isPreloaded, setIsPreloaded] = useState(false);
   const wrapperRef = useRef(null);
   const currentIndexRef = useRef(0); // Add ref to track current index
 
@@ -20,18 +21,43 @@ const Cases = () => {
     document.documentElement.style.overflow = "hidden";
     currentIndexRef.current = 0; // Initialize ref
     
+    // Add preload class to body to prevent premature animations
+    document.body.classList.add("preload");
+    
     // Initialize state properly
     setCurrentIndex(0);
     setNextIndex(1);
     setTargetIndex(1);
 
+    // Set initial states for all cases to prevent flash
+    cases.forEach((_, index) => {
+      const caseElement = document.querySelector(`[data-attr="case-${index}"]`);
+      if (caseElement) {
+        if (index === 0) {
+          // First case starts visible but with elements positioned off-screen
+          caseElement.style.opacity = '1';
+        } else {
+          // Other cases start hidden
+          caseElement.style.opacity = '0';
+        }
+      }
+    });
+
     const timeout = setTimeout(() => {
-      setupEventListeners();
-    }, 1500);
+      // Remove preload class and enable animations
+      document.body.classList.remove("preload");
+      setIsPreloaded(true);
+      
+      // Enable event listeners after initial animations
+      setTimeout(() => {
+        setupEventListeners();
+      }, 2500); // Wait for initial animations to complete
+    }, 100);
 
     return () => {
       clearTimeout(timeout);
       removeEventListeners();
+      document.body.classList.remove("preload");
     };
   }, []);
 
@@ -225,7 +251,7 @@ const Cases = () => {
                 className="case__wrapper"
                 style={{ backgroundColor: item.bgColor }}
               >
-                <CaseImageDisplay
+                                <CaseImageDisplay
                   project={item}
                   isActive={i === currentIndex}
                   isAnimating={isAnimating}
@@ -233,6 +259,7 @@ const Cases = () => {
                   direction={direction}
                   addClip={caseClasses.includes("case__clip")}
                   index={i}
+                  isPreloaded={isPreloaded}
                 />
               </div>
             </section>
