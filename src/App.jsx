@@ -19,6 +19,8 @@ function App() {
   const navCircleRef = useRef();
   const [isTransitioning, setIsTransitioning] = useState(false);
   const mainTimelineRef = useRef(null);
+  const lastScrollTime = useRef(0);
+  const scrollCooldown = 1500; // Prevent rapid scrolling
 
   gsap.registerPlugin(CustomEase);
   CustomEase.create("cubic-text", "0.25, 1, 0.5, 1");
@@ -62,6 +64,10 @@ function App() {
         ball.style.setProperty("--ball-bg-color", "#FFFFFF");
         ball.style.zIndex = "50";
         setIsTransitioning(false);
+        // Reset scroll cooldown after transition
+        setTimeout(() => {
+          scrollTriggered.current = false;
+        }, 500);
       }
     });
 
@@ -174,23 +180,102 @@ function App() {
     };
   }, [loading]);
 
-  // Enhanced scroll to work transition
+  // Enhanced scroll navigation for homepage
   useEffect(() => {
     const handleScroll = (e) => {
+      const now = Date.now();
+      
+      // Only handle scroll on homepage when not loading and not transitioning
       if (
-        location.pathname === "/" &&
-        !scrollTriggered.current &&
-        !loading &&
-        !isTransitioning &&
-        e.deltaY > 0
+        location.pathname !== "/" ||
+        loading ||
+        isTransitioning ||
+        scrollTriggered.current ||
+        (now - lastScrollTime.current) < scrollCooldown
       ) {
-        scrollTriggered.current = true;
+        return;
+      }
+
+      const isScrollDown = e.deltaY > 0;
+      const isScrollUp = e.deltaY < 0;
+      
+      // Minimum scroll threshold to prevent accidental triggers
+      const scrollThreshold = 50;
+      if (Math.abs(e.deltaY) < scrollThreshold) {
+        return;
+      }
+
+      lastScrollTime.current = now;
+      scrollTriggered.current = true;
+
+      if (isScrollDown) {
+        // Scroll down - go to work page
+        console.log("Scrolling down - navigating to /work");
         handleRouteTransition("/work");
+      } else if (isScrollUp) {
+        // Scroll up - go to about page
+        console.log("Scrolling up - navigating to /about");
+        handleRouteTransition("/about");
       }
     };
 
+    // Use passive: false to allow preventDefault if needed
     window.addEventListener("wheel", handleScroll, { passive: true });
     return () => window.removeEventListener("wheel", handleScroll);
+  }, [location.pathname, loading, isTransitioning]);
+
+  // Enhanced touch handling for mobile
+  useEffect(() => {
+    let touchStartY = 0;
+    let touchStartTime = 0;
+
+    const handleTouchStart = (e) => {
+      if (location.pathname !== "/" || loading || isTransitioning) return;
+      
+      touchStartY = e.touches[0].clientY;
+      touchStartTime = Date.now();
+    };
+
+    const handleTouchEnd = (e) => {
+      if (
+        location.pathname !== "/" ||
+        loading ||
+        isTransitioning ||
+        scrollTriggered.current
+      ) return;
+
+      const touchEndY = e.changedTouches[0].clientY;
+      const touchDuration = Date.now() - touchStartTime;
+      const touchDistance = touchStartY - touchEndY;
+      const velocity = Math.abs(touchDistance) / touchDuration;
+
+      // Require minimum distance and velocity for gesture recognition
+      if (Math.abs(touchDistance) < 100 || velocity < 0.5) return;
+
+      const now = Date.now();
+      if ((now - lastScrollTime.current) < scrollCooldown) return;
+
+      lastScrollTime.current = now;
+      scrollTriggered.current = true;
+
+      if (touchDistance > 0) {
+        // Swipe up - go to work page
+        console.log("Swiping up - navigating to /work");
+        handleRouteTransition("/work");
+      } else {
+        // Swipe down - go to about page
+        console.log("Swiping down - navigating to /about");
+        handleRouteTransition("/about");
+      }
+    };
+
+    window.addEventListener("touchstart", handleTouchStart, { passive: true });
+    window.addEventListener("touchend", handleTouchEnd, { passive: true });
+
+    return () => {
+      window.removeEventListener("touchstart", handleTouchStart);
+      window.removeEventListener("touchend", handleTouchEnd);
+    };
   }, [location.pathname, loading, isTransitioning]);
 
   // Reset scroll trigger when leaving home

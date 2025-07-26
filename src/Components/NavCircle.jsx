@@ -10,6 +10,7 @@ const NavCircle = forwardRef(({ onRouteChange }, ref) => {
   const indicatorRef = useRef(null);
   const [isVisible, setIsVisible] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
+  const [scrollDirection, setScrollDirection] = useState(null);
 
   // Navigation items with their positions
   const navItems = [
@@ -89,22 +90,31 @@ const NavCircle = forwardRef(({ onRouteChange }, ref) => {
     });
   };
 
-  const handleNavigation = (targetPath) => {
+  const handleNavigation = (targetPath, fromScroll = false) => {
     if (targetPath === location.pathname || isAnimating) return;
 
     setIsAnimating(true);
     const targetItem = navItems.find(item => item.path === targetPath);
+    
+    // Set scroll direction for visual feedback
+    if (fromScroll) {
+      const currentIndex = navItems.findIndex(item => item.path === location.pathname);
+      const targetIndex = navItems.findIndex(item => item.path === targetPath);
+      setScrollDirection(targetIndex > currentIndex ? "down" : "up");
+    }
     
     // Trigger route change with animation
     if (onRouteChange) {
       onRouteChange(targetPath);
     }
 
-    // Animate rotation during transition
+    // Enhanced rotation animation for scroll navigation
+    const rotationAmount = fromScroll ? 720 : 360; // More dramatic rotation for scroll
+    
     gsap.to(rotatingElementRef.current, {
-      rotation: `+=${360}`,
-      duration: 1.5,
-      ease: "power2.inOut",
+      rotation: `+=${rotationAmount}`,
+      duration: fromScroll ? 2 : 1.5,
+      ease: fromScroll ? "power2.inOut" : "power2.inOut",
       onUpdate: function() {
         // Update indicator at halfway point
         if (this.progress() > 0.5 && this.progress() < 0.6) {
@@ -113,16 +123,74 @@ const NavCircle = forwardRef(({ onRouteChange }, ref) => {
       },
       onComplete: () => {
         setIsAnimating(false);
+        setScrollDirection(null);
       }
     });
+
+    // Add pulse effect for scroll navigation
+    if (fromScroll) {
+      gsap.to(navContainerRef.current, {
+        scale: 1.1,
+        duration: 0.2,
+        ease: "power2.out",
+        yoyo: true,
+        repeat: 1
+      });
+    }
   };
 
   // Expose methods to parent
   useImperativeHandle(ref, () => ({
     triggerPageTransition: (targetRoute) => {
-      handleNavigation(targetRoute);
+      handleNavigation(targetRoute, true); // Mark as scroll-triggered
     }
   }));
+
+  // Listen for scroll events on homepage to provide visual feedback
+  useEffect(() => {
+    if (location.pathname !== "/") return;
+
+    let isScrolling = false;
+    let scrollTimeout;
+
+    const handleWheel = (e) => {
+      if (!isScrolling && Math.abs(e.deltaY) > 30) {
+        isScrolling = true;
+        
+        // Add subtle visual feedback on scroll
+        const direction = e.deltaY > 0 ? "down" : "up";
+        setScrollDirection(direction);
+        
+        // Quick scale animation to show responsiveness
+        gsap.to(navContainerRef.current, {
+          scale: 0.95,
+          duration: 0.1,
+          ease: "power2.out",
+          onComplete: () => {
+            gsap.to(navContainerRef.current, {
+              scale: 1,
+              duration: 0.2,
+              ease: "power2.out"
+            });
+          }
+        });
+
+        // Reset scroll direction after a short delay
+        clearTimeout(scrollTimeout);
+        scrollTimeout = setTimeout(() => {
+          setScrollDirection(null);
+          isScrolling = false;
+        }, 200);
+      }
+    };
+
+    window.addEventListener("wheel", handleWheel, { passive: true });
+    
+    return () => {
+      window.removeEventListener("wheel", handleWheel);
+      clearTimeout(scrollTimeout);
+    };
+  }, [location.pathname]);
 
   if (!isVisible) return null;
 
@@ -130,12 +198,17 @@ const NavCircle = forwardRef(({ onRouteChange }, ref) => {
     <div className="nav-circle-container fixed bottom-0 left-0 w-full pointer-events-none z-50">
       <div 
         ref={navContainerRef}
-        className="absolute bottom-[-50px] left-1/2 transform -translate-x-1/2 pointer-events-auto"
+        className={`absolute bottom-[-50px] left-1/2 transform -translate-x-1/2 pointer-events-auto transition-all duration-300 ${
+          scrollDirection ? 'nav-circle--scrolling' : ''
+        }`}
       >
         {/* Main Navigation Circle */}
         <div className="relative w-40 h-40">
-          {/* Navigation Dot */}
-          <div className="menu__dot absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-6 h-6 bg-white rounded-full z-10"></div>
+          {/* Navigation Dot with enhanced styling */}
+          <div className={`menu__dot absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-6 h-6 bg-white rounded-full z-10 transition-all duration-300 ${
+            scrollDirection === "up" ? "shadow-lg shadow-blue-500/50" : 
+            scrollDirection === "down" ? "shadow-lg shadow-red-500/50" : ""
+          }`}></div>
           
           {/* Rotating Navigation Elements */}
           <div ref={rotatingElementRef} className="absolute inset-0">
@@ -143,7 +216,9 @@ const NavCircle = forwardRef(({ onRouteChange }, ref) => {
               <button
                 key={item.path}
                 onClick={() => handleNavigation(item.path)}
-                className="absolute w-8 h-8 bg-white/20 hover:bg-white/40 rounded-full transition-all duration-300 cursor-pointer border border-white/30"
+                className={`absolute w-8 h-8 bg-white/20 hover:bg-white/40 rounded-full transition-all duration-300 cursor-pointer border border-white/30 ${
+                  location.pathname === item.path ? "bg-white/60 scale-110" : ""
+                }`}
                 style={{
                   top: `calc(50% + ${item.position.y}px)`,
                   left: `calc(50% + ${item.position.x}px)`,
@@ -155,10 +230,12 @@ const NavCircle = forwardRef(({ onRouteChange }, ref) => {
             ))}
           </div>
 
-          {/* Active Indicator */}
+          {/* Active Indicator with enhanced styling */}
           <div 
             ref={indicatorRef}
-            className="absolute w-2 h-2 bg-white rounded-full"
+            className={`absolute w-2 h-2 bg-white rounded-full transition-all duration-300 ${
+              isAnimating ? "shadow-lg shadow-white/50" : ""
+            }`}
             style={{
               top: '50%',
               left: '50%',
@@ -166,17 +243,42 @@ const NavCircle = forwardRef(({ onRouteChange }, ref) => {
             }}
           />
 
-          {/* Outer Circle Border */}
-          <div className="absolute inset-0 rounded-full border border-white/30 pointer-events-none" />
+          {/* Outer Circle Border with scroll feedback */}
+          <div className={`absolute inset-0 rounded-full border border-white/30 pointer-events-none transition-all duration-300 ${
+            scrollDirection ? "border-white/60 shadow-lg" : ""
+          }`} />
+
+          {/* Scroll Direction Indicator */}
+          {scrollDirection && (
+            <div className="absolute inset-0 rounded-full border-2 border-white/20 animate-pulse pointer-events-none" />
+          )}
         </div>
 
-        {/* Navigation Labels */}
+        {/* Navigation Labels with scroll feedback */}
         <div className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-full mb-4">
-          <div className="text-white text-sm font-medium opacity-70">
+          <div className={`text-white text-sm font-medium opacity-70 transition-all duration-300 ${
+            scrollDirection ? "opacity-100 text-shadow" : ""
+          }`}>
             {getCurrentNavItem().label}
+            {scrollDirection && (
+              <span className="ml-2 text-xs">
+                ({scrollDirection === "up" ? "↑ ABOUT" : "↓ WORK"})
+              </span>
+            )}
           </div>
         </div>
       </div>
+
+      {/* Additional CSS for enhanced styling */}
+      <style jsx>{`
+        .nav-circle--scrolling {
+          filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.3));
+        }
+        
+        .text-shadow {
+          text-shadow: 0 0 8px rgba(255, 255, 255, 0.5);
+        }
+      `}</style>
     </div>
   );
 });
