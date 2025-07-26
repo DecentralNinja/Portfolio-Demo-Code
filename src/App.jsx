@@ -4,359 +4,277 @@ import NavCircle from "./Components/NavCircle";
 import { useEffect, useRef, useState } from "react";
 import { gsap } from "gsap";
 import { CustomEase } from "gsap/CustomEase";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
 
 function App() {
   const [loading, setLoading] = useState(true);
-  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
-  gsap.registerPlugin(ScrollTrigger);
-
   const loadingRef = useRef(null);
   const ballRef = useRef(null);
   const circleRef = useRef(null);
   const nameRef = useRef(null);
   const titleRef = useRef(null);
-  const transitionScreenRef = useRef(null);
-  const tlRef = useRef();
   const circleGroupRef = useRef(null);
   const location = useLocation();
   const navigate = useNavigate();
   const scrollTriggered = useRef(false);
   const navCircleRef = useRef();
   const [isTransitioning, setIsTransitioning] = useState(false);
+  const mainTimelineRef = useRef(null);
 
   gsap.registerPlugin(CustomEase);
   CustomEase.create("cubic-text", "0.25, 1, 0.5, 1");
 
-  const animateMainContent = () => {
-    const wordElements = document.querySelectorAll(".home-word");
-    const imageEl = document.querySelector(".mainProfilePic img");
-    const descEl = document.querySelector(".homeDesc");
-
-    const tl = gsap.timeline();
-
-    wordElements.forEach((word, i) => {
-      const delay = i * 0.08;
-      tl.to(
-        word,
-        {
-          y: 0,
-          duration: 1.5,
-          ease: "cubic-text",
-        },
-        delay
-      );
-    });
-
-    // Animate description separately with delay
-    tl.to(
-      descEl,
-      {
-        y: 0,
-        duration: 1.6,
-        ease: "cubic-text",
-      },
-      "+=0.8" // ⬅️ delay after other words
-    );
-
-    // Animate the image reveal after the words
-    tl.fromTo(
-      imageEl,
-      {
-        y: "100%",
-      },
-      {
-        y: "0%",
-        ease: "power3.out",
-        duration: 0.9,
-      },
-      "-=4" // overlaps slightly with the last word animation
-    );
-  };
-
-
+  // Enhanced route transition handler
   const handleRouteTransition = (targetRoute) => {
+    if (isTransitioning) return;
+    
     setIsTransitioning(true);
     const ball = document.querySelector(".menu__dot");
-
-    if (!ball) return;
-
-      
-      ball.style.zIndex = "60"; 
-
-  // Set transition color based on route
-  let ballColor;
-  switch (targetRoute) {
-    case "/work":
-      ballColor = "#ED472F";
-      break;
-    case "/about":
-      ballColor = "#000000";
-      break;
-    default:
-      ballColor = "#000000"; 
-  }
-
-    // Apply the color change IMMEDIATELY (before animation)
-    ball.style.setProperty("--ball-bg-color", ballColor);
-
-    if (ball) {
-      const tl = gsap.timeline();
-
-      // 1. Animate ball expansion
-      tl.to(
-        ball,
-        {
-          scale: 100,
-          duration: 0.6,
-          ease: "none",
-          transformOrigin: "center center",
-          onComplete: () => {
-            navigate(targetRoute);
-          }
-        }
-      );
-
-      // 2. Fade out ball
-      tl.to(
-        ball,
-        {
-          opacity: 0,
-          duration: 0.4,
-        },
-        ">0.1"
-      );
-
-      // Reset after everything
-    tl.call(() => {
-      gsap.set(ball, { scale: 1, opacity: 1 , immediateRender: false});
-      ball.style.setProperty("--ball-bg-color", "#FFFFFF"); 
-      ball.style.zIndex = "50";
+    
+    if (!ball) {
+      navigate(targetRoute);
       setIsTransitioning(false);
-    });
+      return;
     }
+
+    // Set transition color based on route
+    let ballColor;
+    switch (targetRoute) {
+      case "/work":
+        ballColor = "#ED472F";
+        break;
+      case "/about":
+        ballColor = "#000000";
+        break;
+      default:
+        ballColor = "#FFFFFF"; 
+    }
+
+    ball.style.setProperty("--ball-bg-color", ballColor);
+    ball.style.zIndex = "9999";
+
+    const timeline = gsap.timeline({
+      onComplete: () => {
+        gsap.set(ball, { 
+          scale: 1, 
+          opacity: 1,
+          clearProps: "transform"
+        });
+        ball.style.setProperty("--ball-bg-color", "#FFFFFF");
+        ball.style.zIndex = "50";
+        setIsTransitioning(false);
+      }
+    });
+
+    // Smooth scale animation
+    timeline.to(ball, {
+      scale: 120,
+      duration: 1.2,
+      ease: "power2.inOut",
+      transformOrigin: "center center",
+      onUpdate: function() {
+        // Navigate at 60% completion for smoother transition
+        if (this.progress() > 0.6) {
+          navigate(targetRoute);
+        }
+      }
+    });
+
+    // Fade out ball
+    timeline.to(ball, {
+      opacity: 0,
+      duration: 0.6,
+      ease: "power2.inOut"
+    }, "-=0.3");
   };
 
-  // Update the NavCircle component usage
-
+  // Enhanced loading sequence
   useEffect(() => {
-    const handleMouseMove = (e) => {
-      setMousePosition({
-        x: (e.clientX / window.innerWidth - 0.5) * 2,
-        y: (e.clientY / window.innerHeight - 0.5) * 2,
-      });
-    };
-
-    window.addEventListener("mousemove", handleMouseMove);
-
     if (loading) {
-      if (tlRef.current) tlRef.current.kill();
+      // Kill any existing timeline
+      if (mainTimelineRef.current) {
+        mainTimelineRef.current.kill();
+      }
 
-      
-      gsap.set([nameRef.current, titleRef.current], { opacity: 1, y: 0 });
-      gsap.set(ballRef.current, { scale: 1 });
-      gsap.set(circleRef.current, { strokeDashoffset: 283 });
+      // Reset all elements
+      gsap.set([nameRef.current, titleRef.current], { 
+        opacity: 1, 
+        y: 0 
+      });
+      gsap.set(ballRef.current, { 
+        scale: 1,
+        width: 20,
+        height: 20
+      });
+      gsap.set(circleRef.current, { 
+        strokeDashoffset: 283,
+        scale: 1,
+        strokeWidth: 1.5
+      });
 
-      tlRef.current = gsap.timeline({
+      // Main loading timeline
+      mainTimelineRef.current = gsap.timeline({
         onComplete: () => {
-          const tl = gsap.timeline({
+          // Exit animation timeline
+          const exitTimeline = gsap.timeline({
             onComplete: () => {
-              
               gsap.delayedCall(0.1, () => {
                 setLoading(false);
-                animateMainContent();
               });
-            },
+            }
           });
 
-          
-          tl.to(
-            nameRef.current,
-            {
-              y: -60,
-              opacity: 0,
-              duration: 0.6,
-              ease: "power2.in",
-            },
-            0
-          );
+          // Text exit animations
+          exitTimeline.to([nameRef.current, titleRef.current], {
+            y: (i) => i === 0 ? -80 : 80,
+            opacity: 0,
+            duration: 0.8,
+            ease: "power3.in",
+            stagger: 0.1
+          });
 
-          tl.to(
-            titleRef.current,
-            {
-              y: 60,
-              opacity: 0,
-              duration: 0.6,
-              ease: "power2.in",
-            },
-            0
-          );
+          // Circle transforms to nav position
+          exitTimeline.to(circleGroupRef.current, {
+            bottom: "-50px",
+            left: "50%",
+            xPercent: -50,
+            duration: 1.2,
+            ease: "power3.out"
+          }, "-=0.6");
 
-          
-          tl.to(
-            circleGroupRef.current,
-            {
-              bottom: "-50%", 
-              x: "50%",
-              xPercent: -50,
-              duration: 0.8,
-              ease: "power2.out",
-            },
-            0
-          );
+          exitTimeline.to(circleRef.current, {
+            scale: 3,
+            strokeWidth: 2,
+            opacity: 0.8,
+            duration: 1,
+            ease: "power2.inOut"
+          }, "-=0.8");
 
-          
-          tl.to(
-            circleRef.current,
-            {
-              scale: 5,
-              strokeWidth: 4, 
-              duration: 0.6,
-              ease: "power2.inOut",
-            },
-            "<0.4"
-          );
-
-          
-          tl.to(
-            ballRef.current,
-            {
-              width: 24,
-              height: 24,
-              duration: 0.5,
-              ease: "power2.out",
-            },
-            "<0.3"
-          );
-        },
+          exitTimeline.to(ballRef.current, {
+            width: 24,
+            height: 24,
+            duration: 0.8,
+            ease: "power2.out"
+          }, "-=0.6");
+        }
       });
 
-
-      tlRef.current.to(circleRef.current, {
+      // Circle progress animation
+      mainTimelineRef.current.to(circleRef.current, {
         strokeDashoffset: 0,
-        duration: 1.2,
-        ease: "power2.inOut",
+        duration: 2,
+        ease: "power2.inOut"
       });
+
     }
 
     return () => {
-      window.removeEventListener("mousemove", handleMouseMove);
-      if (tlRef.current) tlRef.current.kill();
+      if (mainTimelineRef.current) {
+        mainTimelineRef.current.kill();
+      }
     };
   }, [loading]);
 
+  // Enhanced scroll to work transition
   useEffect(() => {
     const handleScroll = (e) => {
       if (
         location.pathname === "/" &&
         !scrollTriggered.current &&
+        !loading &&
+        !isTransitioning &&
         e.deltaY > 0
       ) {
         scrollTriggered.current = true;
-
-        const ball = document.querySelector(".menu__dot");
-        const navCircle = navCircleRef.current;
-
-        if (ball && navCircle) {
-          const tl = gsap.timeline();
-         
-          tl.add(() => {
-            navCircle.triggerPageTransition("/work");
-          }, 0);
-
-          tl.call(() => {
-            ball.style.setProperty("--ball-bg-color", "#FFFFFF");
-          }, 0);
-          
-          tl.to(
-            ball,
-            {
-              scale: 100,
-              duration: 1, 
-              ease: "none", 
-              transformOrigin: "center center",
-            },
-            0
-          );
-
-          tl.to(
-            ball,
-            {
-              opacity: 0,
-              duration: 0.4,
-            },
-            ">0.2"
-          ); 
-
-        }
+        handleRouteTransition("/work");
       }
     };
 
-    window.addEventListener("wheel", handleScroll);
+    window.addEventListener("wheel", handleScroll, { passive: true });
     return () => window.removeEventListener("wheel", handleScroll);
-  }, [location.pathname, navigate]);
+  }, [location.pathname, loading, isTransitioning]);
+
+  // Reset scroll trigger when leaving home
+  useEffect(() => {
+    if (location.pathname !== "/") {
+      scrollTriggered.current = false;
+    }
+  }, [location.pathname]);
 
   return (
-    <>
-      <div className="home-layout">
-        {loading && (
-          <div
-            className="loading-container fixed top-0 left-0 w-full h-full bg-black"
-            ref={transitionScreenRef}
-          >
-            <h2>
-              <span className="relative inline-block overflow-hidden h-[64px] loadingName">
-                <span className="block text-[36px] loadingName" ref={nameRef}>
-                  SYED MAAZ HAMID
-                </span>
+    <div className="app-container">
+      {/* Enhanced Loading Screen */}
+      {loading && (
+        <div
+          className="loading-container fixed inset-0 bg-black z-50 flex flex-col items-center justify-center"
+          ref={loadingRef}
+        >
+          {/* Name */}
+          <div className="mb-8">
+            <div className="relative inline-block overflow-hidden">
+              <span 
+                className="block text-4xl md:text-5xl font-medium text-white"
+                ref={nameRef}
+              >
+                SYED MAAZ HAMID
               </span>
-            </h2>
-
-            <div className="relative" ref={circleGroupRef}>
-              <div className="relative w-[44px] h-[44px] flex items-center justify-center">
-                <svg
-                  ref={circleRef}
-                  className="absolute top-0 left-0 scale-150"
-                  viewBox="0 0 100 100"
-                  style={{ width: "44px", height: "44px" }}
-                >
-                  <circle
-                    cx="50"
-                    cy="50"
-                    r="45"
-                    fill="none"
-                    stroke="white"
-                    strokeWidth="1.5"
-                    strokeDasharray="283"
-                    strokeLinecap="round"
-                  />
-                </svg>
-                <div
-                  ref={ballRef}
-                  className="ball h-5 w-5 rounded-full bg-white"
-                ></div>
-              </div>
             </div>
-
-            <h2>
-              <span className="relative inline-block overflow-hidden h-[64px] ">
-                <span className="block text-[36px] loadingName" ref={titleRef}>
-                  CREATIVE DEVELOPER
-                </span>
-              </span>
-            </h2>
           </div>
-        )}
 
-        <div className={`content-area ${loading ? "hidden" : ""}`}>
-          <Outlet context={{ loading }} />
+          {/* Loading Circle */}
+          <div className="relative mb-8" ref={circleGroupRef}>
+            <div className="relative w-12 h-12 flex items-center justify-center">
+              <svg
+                ref={circleRef}
+                className="absolute inset-0"
+                viewBox="0 0 100 100"
+                style={{ width: "48px", height: "48px" }}
+              >
+                <circle
+                  cx="50"
+                  cy="50"
+                  r="45"
+                  fill="none"
+                  stroke="white"
+                  strokeWidth="1.5"
+                  strokeDasharray="283"
+                  strokeLinecap="round"
+                  style={{ transformOrigin: "center" }}
+                />
+              </svg>
+              <div
+                ref={ballRef}
+                className="w-5 h-5 rounded-full bg-white"
+              />
+            </div>
+          </div>
+
+          {/* Title */}
+          <div>
+            <div className="relative inline-block overflow-hidden">
+              <span 
+                className="block text-xl md:text-2xl font-light text-white"
+                ref={titleRef}
+              >
+                CREATIVE DEVELOPER
+              </span>
+            </div>
+          </div>
         </div>
+      )}
 
-        {!loading && (
-          <NavCircle ref={navCircleRef} onRouteChange={handleRouteTransition} />
-        )}
+      {/* Main Content */}
+      <div className={`content-area transition-opacity duration-500 ${loading ? "opacity-0" : "opacity-100"}`}>
+        <Outlet context={{ loading }} />
       </div>
-    </>
+
+      {/* Navigation Circle */}
+      {!loading && (
+        <NavCircle 
+          ref={navCircleRef} 
+          onRouteChange={handleRouteTransition}
+        />
+      )}
+    </div>
   );
 }
 

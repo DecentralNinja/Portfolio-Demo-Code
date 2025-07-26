@@ -1,116 +1,188 @@
-import React, {useEffect, useState } from "react";
-import NavCircle from "../Components/NavCircle";
+import React, { useEffect, useState, useRef } from "react";
 import { useOutletContext } from "react-router-dom";
 import gsap from "gsap";
 
 const Home = () => {
-   const { loading } = useOutletContext(); 
+  const { loading } = useOutletContext(); 
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+  const homeContainerRef = useRef(null);
+  const mouseTrackingRef = useRef({ x: 0, y: 0 });
+  const animationFrameRef = useRef(null);
 
+  // Optimized mouse tracking with RAF
   useEffect(() => {
     const handleMouseMove = (e) => {
-      setMousePosition({
+      mouseTrackingRef.current = {
         x: (e.clientX / window.innerWidth - 0.5) * 2,
         y: (e.clientY / window.innerHeight - 0.5) * 2,
-      });
+      };
     };
+
+    // Smooth animation loop
+    const animateMouseMovement = () => {
+      setMousePosition(prev => ({
+        x: prev.x + (mouseTrackingRef.current.x - prev.x) * 0.1,
+        y: prev.y + (mouseTrackingRef.current.y - prev.y) * 0.1,
+      }));
+      animationFrameRef.current = requestAnimationFrame(animateMouseMovement);
+    };
+
     window.addEventListener("mousemove", handleMouseMove);
+    animationFrameRef.current = requestAnimationFrame(animateMouseMovement);
 
     return () => {
       window.removeEventListener("mousemove", handleMouseMove);
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+      }
     };
   }, []);
 
+  // Enhanced text animations when loading completes
   useEffect(() => {
-  if (!loading) {
-    gsap.to(".home-word", {
-      y: 0,
-      duration: 1,
-      ease: "power3.out",
-      stagger: 0.1,
-    });
-    gsap.to(".mainProfilePic img", {
-      y: 0,
-      duration: 1.2,
-      ease: "power3.out",
-      delay: 0.2,
-    });
-  }
-}, [loading]);
+    if (!loading && homeContainerRef.current) {
+      const timeline = gsap.timeline({ delay: 0.2 });
 
+      // Animate words with stagger
+      timeline.to(".home-word", {
+        y: 0,
+        duration: 1.2,
+        ease: "power3.out",
+        stagger: {
+          amount: 0.6,
+          from: "start"
+        }
+      });
+
+      // Animate profile image
+      timeline.fromTo(".mainProfilePic img", {
+        y: "30%",
+        scale: 1.1
+      }, {
+        y: "0%",
+        scale: 1,
+        duration: 1.4,
+        ease: "power3.out"
+      }, "-=0.8");
+
+      // Animate description with delay
+      timeline.to(".homeDesc", {
+        y: 0,
+        opacity: 1,
+        duration: 1.2,
+        ease: "power3.out"
+      }, "-=0.4");
+
+      // Animate background elements
+      timeline.fromTo(".dark-ground-fade", {
+        opacity: 0,
+        y: 20
+      }, {
+        opacity: 1,
+        y: 0,
+        duration: 1,
+        ease: "power2.out"
+      }, "-=1");
+    }
+  }, [loading]);
+
+  // Get optimized movement for different speeds
   const getMovement = (speedX, speedY) => ({
-    transform: `translate(${mousePosition.x * speedX}px, ${
-      mousePosition.y * speedY
-    }px)`,
-    transition: "transform 0.4s cubic-bezier(0.15, 0.75, 0.5, 1)",
+    transform: `translate3d(${mousePosition.x * speedX}px, ${mousePosition.y * speedY}px, 0)`,
+    willChange: "transform"
   });
-
 
   return (
     <div className="relative w-full h-screen bg-black overflow-hidden">
-      {/* HOME MAINCONTENT */}
+      {/* HOME MAIN CONTENT */}
       <div
-        className={`home-container  h-screen overflow-hidden transition-opacity duration-500 ease-out ${
+        ref={homeContainerRef}
+        className={`home-container h-screen overflow-hidden transition-opacity duration-700 ease-out ${
           loading ? "opacity-0 pointer-events-none" : "opacity-100"
         }`}
       >
-        <div>
-          <div className="HomeSection left-1/2 -translate-x-1/2 relative h-screen ">
+        <div className="HomeSection left-1/2 -translate-x-1/2 relative h-screen">
+          {/* Profile Image */}
           <div className="absolute maazProfile">
-            <div className="mainProfilePic overflow-hidden" style={getMovement(30, 20)} >
+            <div 
+              className="mainProfilePic overflow-hidden" 
+              style={getMovement(25, 15)}
+            >
               <img
                 src="/maaz-try.png"
-                alt="maazPic"
-                className="maaz_Pic max-w-none relative "
+                alt="Syed Maaz Hamid Profile"
+                className="maaz_Pic max-w-none relative"
+                style={{ transform: "translateY(30%)" }}
               />
             </div>
           </div>
-            <h2 className="absolute text-syedPosit">
-              <span
-                className=" relative inline-block overflow-hidden text_Contain"
-                style={getMovement(12, 8)}
-              >
-                <span className="home-word text_syed block leading-none" style={{transform: "translateY(100%)"}}>
-                  SYED
-                </span>
-              </span>
-            </h2>
 
-            <h2 className="text-maazPosit absolute">
-              <span
-                className="relative inline-block overflow-hidden text_Contain text_Contain2"
-                style={getMovement(12, 8)}
+          {/* Name Elements */}
+          <h2 className="absolute text-syedPosit">
+            <span
+              className="relative inline-block overflow-hidden text_Contain"
+              style={getMovement(8, 5)}
+            >
+              <span 
+                className="home-word text_syed block leading-none" 
+                style={{ transform: "translateY(100%)" }}
               >
-                <span className="home-word text_maaz block leading-none" style={{transform: "translateY(100%)"}}>
-                  MAAZ
-                </span>
+                SYED
               </span>
-            </h2>
+            </span>
+          </h2>
 
-            <h2 className="text-hamidPosit absolute">
-              <span
-                className=" relative inline-block overflow-hidden text_Contain"
-                style={getMovement(12, 8)}
+          <h2 className="text-maazPosit absolute">
+            <span
+              className="relative inline-block overflow-hidden text_Contain text_Contain2"
+              style={getMovement(10, 6)}
+            >
+              <span 
+                className="home-word text_maaz block leading-none" 
+                style={{ transform: "translateY(100%)" }}
               >
-                <span className="home-word block text_hamid leading-none" style={{transform: "translateY(100%)"}}>
-                  HAMID
-                </span>
+                MAAZ
               </span>
-            </h2>
+            </span>
+          </h2>
 
-            <h2 className="text-DescPosit absolute">
-              <span
-                className=" relative inline-block overflow-hidden descContain leading-none"
-                style={getMovement(12, 8)}
+          <h2 className="text-hamidPosit absolute">
+            <span
+              className="relative inline-block overflow-hidden text_Contain"
+              style={getMovement(6, 4)}
+            >
+              <span 
+                className="home-word block text_hamid leading-none" 
+                style={{ transform: "translateY(100%)" }}
               >
-                <span className="home-word homeDesc font-medium translate-y-full">
-                  UIUX DESIGNER & CREATIVE FRONTEND DEVELOPER FROM PAKISTAN
-                </span>
+                HAMID
               </span>
-            </h2>
-          </div>
+            </span>
+          </h2>
+
+          {/* Description */}
+          <h2 className="text-DescPosit absolute">
+            <span
+              className="relative inline-block overflow-hidden descContain leading-none"
+              style={getMovement(4, 3)}
+            >
+              <span 
+                className="home-word homeDesc font-medium opacity-0"
+                style={{ transform: "translateY(20px)" }}
+              >
+                UIUX DESIGNER & CREATIVE FRONTEND DEVELOPER FROM PAKISTAN
+              </span>
+            </span>
+          </h2>
         </div>
-          <img src="/shadow-2.png" alt="shadow-2" className="dark-ground-fade" />
+
+        {/* Background Shadow */}
+        <img 
+          src="/shadow-2.png" 
+          alt="Background Shadow" 
+          className="dark-ground-fade pointer-events-none"
+          style={{ opacity: 0 }}
+        />
       </div>
     </div>
   );
