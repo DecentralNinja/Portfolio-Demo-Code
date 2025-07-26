@@ -11,6 +11,7 @@ const Cases = () => {
   const [targetIndex, setTargetIndex] = useState(1);
   const [direction, setDirection] = useState("next");
   const [isAnimating, setIsAnimating] = useState(false);
+  const [animationPhase, setAnimationPhase] = useState("idle"); // Track animation phases
   const [touchStartY, setTouchStartY] = useState(0);
   const wrapperRef = useRef(null);
   const currentIndexRef = useRef(0);
@@ -18,12 +19,13 @@ const Cases = () => {
   useEffect(() => {
     document.body.style.backgroundColor = cases[0].bgColor;
     document.documentElement.style.overflow = "hidden";
-    currentIndexRef.current = 0; // Initialize ref
+    currentIndexRef.current = 0;
 
     // Initialize state properly
     setCurrentIndex(0);
     setNextIndex(1);
     setTargetIndex(1);
+    setAnimationPhase("idle");
 
     const timeout = setTimeout(() => {
       setupEventListeners();
@@ -33,14 +35,12 @@ const Cases = () => {
       clearTimeout(timeout);
       removeEventListeners();
     };
-
   }, []);
 
   // Keep ref in sync with state
   useEffect(() => {
     currentIndexRef.current = currentIndex;
   }, [currentIndex]);
-
 
   const setupEventListeners = () => {
     if (wrapperRef.current) {
@@ -65,10 +65,12 @@ const Cases = () => {
 
   const animateTransition = (dir, targetIdx = null) => {
     setIsAnimating(true);
+    setAnimationPhase("starting");
     setDirection(dir);
 
     const ease = "expo.inOut";
 
+    // Set initial shape state without flickering
     gsap.set(".shape", {
       attr: {
         d:
@@ -78,57 +80,72 @@ const Cases = () => {
       },
     });
 
-    gsap.to(".shape", {
-      attr: {
-        d:
-          dir === "next"
-            ? "M 0 0 Q 0.5 -0.2 1 0 L 1 1 L 0 1 z"
-            : "M 0 1 Q 0.5 1.4 1 1 L 1 1 L 0 1 z",
-      },
-      duration: 1.5,
-      ease,
-      onComplete: () => {
-
-        setIsAnimating(false);
-        
-        // Reset shape for next animation
-        gsap.set(".shape", {
-          attr: {
-            d: dir === "next" 
-              ? "M 0 1 Q 0.5 1.4 1 1 L 1 1 L 0 1 z"
-              : "M 0 0 Q 0.5 0 1 0 L 1 1 L 0 1 z"
-          },
-        });
-
-        let newCurrentIndex;
-        
-        if (dir === "next") {
-          if (targetIdx !== null) {
-            newCurrentIndex = targetIdx;
-            setCurrentIndex(targetIdx);
-            setNextIndex((targetIdx + 1) % cases.length);
-          } else {
-            newCurrentIndex = (currentIndexRef.current + 1) % cases.length;
-            setCurrentIndex(newCurrentIndex);
-            setNextIndex((newCurrentIndex + 1) % cases.length);
+    // Wait a frame before starting the main animation to prevent flickering
+    gsap.delayedCall(0.02, () => {
+      setAnimationPhase("animating");
+      
+      gsap.to(".shape", {
+        attr: {
+          d:
+            dir === "next"
+              ? "M 0 0 Q 0.5 -0.2 1 0 L 1 1 L 0 1 z"
+              : "M 0 1 Q 0.5 1.4 1 1 L 1 1 L 0 1 z",
+        },
+        duration: 1.5,
+        ease,
+        onUpdate: function() {
+          // Apply state changes mid-animation to reduce flickering
+          if (this.progress() > 0.6 && animationPhase === "animating") {
+            setAnimationPhase("completing");
           }
-        } else {
-          if (targetIdx !== null) {
-            newCurrentIndex = targetIdx;
-            setCurrentIndex(targetIdx);
-            setNextIndex(targetIdx);
-          } else {
-            newCurrentIndex = (currentIndexRef.current - 1 + cases.length) % cases.length;
-            setCurrentIndex(newCurrentIndex);
-            setNextIndex(newCurrentIndex);
-          }
-        }
+        },
+        onComplete: () => {
+          setAnimationPhase("completing");
+          
+          // Reset shape for next animation
+          gsap.set(".shape", {
+            attr: {
+              d: dir === "next" 
+                ? "M 0 1 Q 0.5 1.4 1 1 L 1 1 L 0 1 z"
+                : "M 0 0 Q 0.5 0 1 0 L 1 1 L 0 1 z"
+            },
+          });
 
-        // Update background color
-        document.body.style.backgroundColor = cases[newCurrentIndex].bgColor;
-        
-        setupEventListeners();
-      },
+          let newCurrentIndex;
+          
+          if (dir === "next") {
+            if (targetIdx !== null) {
+              newCurrentIndex = targetIdx;
+              setCurrentIndex(targetIdx);
+              setNextIndex((targetIdx + 1) % cases.length);
+            } else {
+              newCurrentIndex = (currentIndexRef.current + 1) % cases.length;
+              setCurrentIndex(newCurrentIndex);
+              setNextIndex((newCurrentIndex + 1) % cases.length);
+            }
+          } else {
+            if (targetIdx !== null) {
+              newCurrentIndex = targetIdx;
+              setCurrentIndex(targetIdx);
+              setNextIndex(targetIdx);
+            } else {
+              newCurrentIndex = (currentIndexRef.current - 1 + cases.length) % cases.length;
+              setCurrentIndex(newCurrentIndex);
+              setNextIndex(newCurrentIndex);
+            }
+          }
+
+          // Update background color
+          document.body.style.backgroundColor = cases[newCurrentIndex].bgColor;
+          
+          // Delay the reset to prevent flickering
+          gsap.delayedCall(0.1, () => {
+            setIsAnimating(false);
+            setAnimationPhase("idle");
+            setupEventListeners();
+          });
+        },
+      });
     });
   };
 
@@ -136,7 +153,7 @@ const Cases = () => {
     e.preventDefault();
     e.stopPropagation();
 
-    if (isAnimating) {
+    if (isAnimating || animationPhase !== "idle") {
       return;
     }
 
@@ -177,7 +194,7 @@ const Cases = () => {
   };
 
   const jumpToCase = (targetIdx) => {
-    if (!isAnimating && targetIdx !== currentIndex) {
+    if (!isAnimating && targetIdx !== currentIndex && animationPhase === "idle") {
       setIsAnimating(true);
       const dir = targetIdx > currentIndex ? "next" : "prev";
       setDirection(dir);
@@ -203,13 +220,17 @@ const Cases = () => {
         {cases.map((item, i) => {
           let caseClasses = "case";
 
-           // Apply clip class based on direction and index
-          if (direction === "next" ? i === nextIndex : i === currentIndex) {
-            caseClasses += " case__clip";
+          // Only apply clip class during specific animation phases to prevent flickering
+          if (animationPhase === "animating" || animationPhase === "completing") {
+            if (direction === "next" ? i === nextIndex : i === currentIndex) {
+              caseClasses += " case__clip";
+            }
           }
           
-          // Apply hide class to non-active cases
-          if (i !== currentIndex && i !== nextIndex && i !== targetIndex) {
+          // Apply hide class more intelligently
+          if (animationPhase === "idle" && i !== currentIndex) {
+            caseClasses += " case__hide";
+          } else if (animationPhase !== "idle" && i !== currentIndex && i !== nextIndex && i !== targetIndex) {
             caseClasses += " case__hide";
           }
 
@@ -227,9 +248,10 @@ const Cases = () => {
                   project={item}
                   isActive={i === currentIndex}
                   isAnimating={isAnimating}
-                   isNextItem={i === nextIndex || i === targetIndex}
+                  isNextItem={i === nextIndex || i === targetIndex}
                   direction={direction}
                   addClip={caseClasses.includes("case__clip")}
+                  animationPhase={animationPhase}
                   index={i}
                 />
               </div>
@@ -250,6 +272,5 @@ const Cases = () => {
     </>
   );
 };
-
 
 export default Cases;

@@ -11,19 +11,21 @@ const CaseImageDisplay = ({
   isAnimating = false,
   isNextItem = false,
   direction = "next",
+  animationPhase = "idle",
 }) => {
   const titleWrapperRef = useRef(null);
   const titleRef = useRef(null);
   const imageRef = useRef(null);
   const navigate = useNavigate();
   const [hasNavigated, setHasNavigated] = useState(false);
+  const [isInitialized, setIsInitialized] = useState(false);
   const { loading } = useOutletContext(); 
 
   const hasLineBreak = project.title?.includes('<br/>');
 
   // Initial setup animations
   useEffect(() => {
-    if (isActive && index === 0) {
+    if (isActive && index === 0 && !isInitialized) {
       // Initial animation for the first case
       gsap.to(titleRef.current, {
         y: 0,
@@ -31,10 +33,11 @@ const CaseImageDisplay = ({
         ease: "elastic.out(1, 1)",
         duration: 1.5
       });
+      setIsInitialized(true);
     }
     
-    if (isActive) {
-      // Set initial state for active case image
+    if (isActive && !isAnimating) {
+      // Set initial state for active case image when not animating
       gsap.to(imageRef.current, {
         yPercent: 0,
         rotate: 2,
@@ -42,12 +45,20 @@ const CaseImageDisplay = ({
         duration: 1.7
       });
     }
-  }, [isActive, index, loading]);
+  }, [isActive, index, loading, isAnimating, isInitialized]);
 
-
-  // Animation when cases transition
+  // Animation when cases transition - improved with animation phases
   useEffect(() => {
-    if (isAnimating && isActive) {
+    if (!isAnimating || animationPhase === "idle") return;
+
+    // Prevent conflicting animations during phase transitions
+    if (animationPhase === "starting") {
+      // Kill any existing animations to prevent conflicts
+      gsap.killTweensOf([titleRef.current, imageRef.current]);
+      return;
+    }
+
+    if (animationPhase === "animating" && isActive) {
       // Current case being replaced
       if (direction === "next") {
         // Moving up (next case comes from below)
@@ -57,10 +68,13 @@ const CaseImageDisplay = ({
           ease: "expo.inOut",
           duration: 1.7,
           onComplete: () => {
-            gsap.set(imageRef.current, {
-              yPercent: 0,
-              rotate: 5
-            });
+            // Only reset if still the active case
+            if (isActive) {
+              gsap.set(imageRef.current, {
+                yPercent: 0,
+                rotate: 5
+              });
+            }
           }
         });
         
@@ -77,10 +91,12 @@ const CaseImageDisplay = ({
           ease: "expo.inOut",
           duration: 2,
           onComplete: () => {
-            gsap.set(imageRef.current, {
-              yPercent: 0,
-              rotate: 5
-            });
+            if (isActive) {
+              gsap.set(imageRef.current, {
+                yPercent: 0,
+                rotate: 5
+              });
+            }
           }
         });
         
@@ -90,7 +106,7 @@ const CaseImageDisplay = ({
           duration: 1.5
         });
       }
-    } else if (isAnimating && isNextItem) {
+    } else if (animationPhase === "animating" && isNextItem) {
       // Next case coming into view
       if (direction === "next") {
         // Coming from below
@@ -142,16 +158,15 @@ const CaseImageDisplay = ({
         });
       }
     }
-  }, [isAnimating, isActive, isNextItem, direction, hasLineBreak]);
+  }, [isAnimating, isActive, isNextItem, direction, hasLineBreak, animationPhase]);
 
-  // Cleanup animations on unmount
+  // Improved cleanup with proper animation phase handling
   useEffect(() => {
     return () => {
       // Kill all GSAP animations related to this component
       gsap.killTweensOf([titleRef.current, imageRef.current, titleWrapperRef.current]);
     };
   }, []);
-
 
   // Reset navigation state when case changes
   useEffect(() => {
@@ -162,10 +177,10 @@ const CaseImageDisplay = ({
   const isMobile = () => window.innerWidth <= 768;
   const isTablet = () => window.innerWidth > 768 && window.innerWidth <= 1024;
 
-
   // Click handler for navigation
   const handleCaseClick = () => {
-    if (hasNavigated) return;
+    // Prevent clicks during animation phases that could cause conflicts
+    if (hasNavigated || isAnimating || animationPhase !== "idle") return;
     
     document.body.style.cursor = "wait";
     
@@ -204,15 +219,15 @@ const CaseImageDisplay = ({
       rotate: 5,
       ease: "expo.inOut",
       duration: 2,
-             onUpdate: function() {
-         // Navigate when animation is 80% complete
-         if (this.progress() > 0.8 && !hasNavigated) {
-           setHasNavigated(true);
-           // For now, log the navigation or create a route later
-           console.log(`Navigate to case ${project.id}`);
-           // navigate(`/cases/${project.id}`);
-         }
-       },
+      onUpdate: function() {
+        // Navigate when animation is 80% complete
+        if (this.progress() > 0.8 && !hasNavigated) {
+          setHasNavigated(true);
+          // For now, log the navigation or create a route later
+          console.log(`Navigate to case ${project.id}`);
+          // navigate(`/cases/${project.id}`);
+        }
+      },
       onComplete: () => {
         document.body.style.cursor = "none";
       }
@@ -232,12 +247,21 @@ const CaseImageDisplay = ({
           ref={titleRef}
           dangerouslySetInnerHTML={{ __html: project.title }}
           onClick={handleCaseClick}
-          style={{cursor: 'pointer', transform: 'translate(0px, 450px)'}}
+          style={{
+            cursor: isAnimating || animationPhase !== "idle" ? 'default' : 'pointer', 
+            transform: 'translate(0px, 450px)'
+          }}
         />
       </div>
 
       <div className="case__img-wrapper" ref={imageRef}>
-        <figure className="case__figure" onClick={handleCaseClick} style={{cursor: 'pointer'}}>
+        <figure 
+          className="case__figure" 
+          onClick={handleCaseClick} 
+          style={{
+            cursor: isAnimating || animationPhase !== "idle" ? 'default' : 'pointer'
+          }}
+        >
           <img
             className={`case__img  ${
               project.containOverviewHeader ? 'case__img--contain' : ''
@@ -251,6 +275,5 @@ const CaseImageDisplay = ({
     </>
   );
 };
-
 
 export default CaseImageDisplay;
