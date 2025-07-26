@@ -9,19 +9,29 @@ const CaseImageDisplay = ({
   project = {},
   isActive = false,
   isAnimating = false,
+  isNextItem = false,
   direction = "next",
 }) => {
-  const titleWrapperRef = useRef(null);
-  const titleRef = useRef(null);
-  const imageRef = useRef(null);
+  const titleWrapperRef = useRef(null); // g in Vue
+  const titleRef = useRef(null); // o in Vue
+  const imageRef = useRef(null); // i in Vue
   const navigate = useNavigate();
-  const [hasNavigated, setHasNavigated] = useState(false);
+  const [hasNavigated, setHasNavigated] = useState(false); // y in Vue
   const { loading } = useOutletContext(); 
 
   const hasLineBreak = project.title?.includes('<br/>');
 
-  // Initial setup for first case
-  useEffect(() => {
+  // This matches the x function in Vue exactly
+  const initialSetup = () => {
+    if (isActive) {
+      gsap.to(imageRef.current, {
+        yPercent: -150,
+        rotate: 2,
+        ease: "expo.inOut",
+        duration: 1.7
+      });
+    }
+    
     if (isActive && index === 0) {
       gsap.to(titleRef.current, {
         y: 0,
@@ -30,30 +40,31 @@ const CaseImageDisplay = ({
         duration: 1.5
       });
     }
-    
-    if (isActive && !isAnimating) {
-      gsap.to(imageRef.current, {
-        yPercent: 0,
-        rotate: 2,
-        ease: "expo.inOut",
-        duration: 1.7
-      });
-    }
-  }, [isActive, index, loading, isAnimating]);
+  };
 
-  // Handle animations during transitions
+  // Watch for loading state change - matches Vue watcher
   useEffect(() => {
-    if (!isAnimating) return;
+    if (!loading) {
+      initialSetup();
+    }
+  }, [loading]);
 
-    if (isActive) {
+  // This matches the Vue watchEffect exactly
+  useEffect(() => {
+    if (isAnimating && isActive) {
       // Current case being replaced
       if (direction === "next") {
-        // Moving up (next case comes from below)
         gsap.to(imageRef.current, {
-          yPercent: -105,
+          yPercent: -235,
           rotate: -5,
           ease: "expo.inOut",
-          duration: 1.7
+          duration: 1.7,
+          onComplete: () => {
+            gsap.set(imageRef.current, {
+              yPercent: 0,
+              rotate: 5
+            });
+          }
         });
         
         gsap.to(titleRef.current, {
@@ -62,12 +73,17 @@ const CaseImageDisplay = ({
           duration: 1.5
         });
       } else {
-        // Moving down (prev case comes from above)
         gsap.to(imageRef.current, {
-          yPercent: 105,
-          rotate: 5,
+          yPercent: 0,
+          rotate: -5,
           ease: "expo.inOut",
-          duration: 1.7
+          duration: 2,
+          onComplete: () => {
+            gsap.set(imageRef.current, {
+              yPercent: 0,
+              rotate: 5
+            });
+          }
         });
         
         gsap.to(titleRef.current, {
@@ -76,15 +92,18 @@ const CaseImageDisplay = ({
           duration: 1.5
         });
       }
-    } else {
+    } else if (isAnimating && isNextItem) {
       // Next case coming into view
       if (direction === "next") {
-        // Coming from below
-        gsap.fromTo(imageRef.current, {
-          yPercent: 150,
+        gsap.set(imageRef.current, {
+          top: "50%",
+          yPercent: 50,
           rotate: 15
-        }, {
-          yPercent: 0,
+        });
+        
+        gsap.to(imageRef.current, {
+          top: "50%",
+          yPercent: -150,
           rotate: 2,
           ease: "expo.inOut",
           duration: 1.7
@@ -96,15 +115,18 @@ const CaseImageDisplay = ({
           y: 0,
           ease: "expo.inOut",
           duration: 1.5,
-          delay: 0.3
+          delay: 0.5
         });
       } else {
-        // Coming from above
-        gsap.fromTo(imageRef.current, {
-          yPercent: -150,
+        gsap.set(imageRef.current, {
+          top: "50%",
+          yPercent: -300,
           rotate: -15
-        }, {
-          yPercent: 0,
+        });
+        
+        gsap.to(imageRef.current, {
+          top: "50%",
+          yPercent: -150,
           rotate: 2,
           ease: "expo.inOut",
           duration: 1.7
@@ -116,32 +138,17 @@ const CaseImageDisplay = ({
           y: 0,
           ease: "expo.inOut",
           duration: 1.5,
-          delay: 0.3
+          delay: 0.5
         });
       }
     }
-  }, [isAnimating, isActive, direction, hasLineBreak]);
+  }, [isAnimating, isActive, isNextItem, direction, hasLineBreak]);
 
-  // Reset when case becomes active after animation
+  // Initial setup on mount - matches Vue onMounted
   useEffect(() => {
-    if (isActive && !isAnimating) {
-      // Reset position for active case
-      gsap.set(imageRef.current, {
-        yPercent: 0,
-        rotate: 2
-      });
-      
-      gsap.set(titleRef.current, {
-        y: 0
-      });
+    if (!loading) {
+      initialSetup();
     }
-  }, [isActive, isAnimating]);
-
-  // Cleanup on unmount
-  useEffect(() => {
-    return () => {
-      gsap.killTweensOf([titleRef.current, imageRef.current, titleWrapperRef.current]);
-    };
   }, []);
 
   // Reset navigation state when case changes
@@ -153,42 +160,34 @@ const CaseImageDisplay = ({
   const isMobile = () => window.innerWidth <= 768;
   const isTablet = () => window.innerWidth > 768 && window.innerWidth <= 1024;
 
-  // Click handler for navigation
+  // This matches the b function in Vue exactly
   const handleCaseClick = () => {
-    if (hasNavigated || isAnimating || !isActive) return;
+    if (hasNavigated || !isActive) return;
     
     document.body.style.cursor = "wait";
     
     const mobile = isMobile();
     const tablet = isTablet();
     
-    // Animate title wrapper with responsive positioning
-    const topValue = mobile 
-      ? (hasLineBreak ? 47 : 55) 
-      : tablet 
-        ? (hasLineBreak ? -55 : -15) 
-        : 25;
-    
     gsap.to(titleWrapperRef.current, {
-      top: topValue,
+      top: mobile 
+        ? (hasLineBreak ? 47 : 55) 
+        : tablet 
+          ? (hasLineBreak ? -55 : -15) 
+          : 25,
       ease: "expo.inOut",
       duration: 1.2
     });
 
-    // Animate title with responsive sizing
-    const fontSize = mobile ? "6rem" : tablet ? "15rem" : "25rem";
-    const lineHeight = mobile ? "6rem" : tablet ? "12rem" : "20rem";
-    
     gsap.to(titleRef.current, {
-      fontSize: fontSize,
-      lineHeight: lineHeight,
+      fontSize: mobile ? `${60 / 10}rem` : tablet ? `${150 / 10}rem` : `${250 / 10}rem`,
+      lineHeight: mobile ? `${60 / 10}rem` : tablet ? `${120 / 10}rem` : `${200 / 10}rem`,
       color: project.isContrastColor ? "#1A1A1A" : "#fff",
       letterSpacing: 0,
       ease: "expo.inOut",
       duration: 1.2
     });
 
-    // Animate image
     gsap.to(imageRef.current, {
       yPercent: 0,
       rotate: 5,
@@ -221,7 +220,7 @@ const CaseImageDisplay = ({
           dangerouslySetInnerHTML={{ __html: project.title }}
           onClick={handleCaseClick}
           style={{
-            cursor: isAnimating || !isActive ? 'default' : 'pointer', 
+            cursor: 'pointer',
             transform: 'translate(0px, 450px)'
           }}
         />
@@ -231,9 +230,7 @@ const CaseImageDisplay = ({
         <figure 
           className="case__figure" 
           onClick={handleCaseClick} 
-          style={{
-            cursor: isAnimating || !isActive ? 'default' : 'pointer'
-          }}
+          style={{ cursor: 'pointer' }}
         >
           <img
             className={`case__img  ${
