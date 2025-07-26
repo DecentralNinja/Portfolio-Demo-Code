@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import gsap from 'gsap';
 import { useNavigate } from 'react-router-dom';
+import { useOutletContext } from "react-router-dom";
 import { Z_INDEX } from '../Components/zIndex';
 
 const CaseImageDisplay = ({
@@ -16,6 +17,7 @@ const CaseImageDisplay = ({
   const imageRef = useRef(null);
   const navigate = useNavigate();
   const [hasNavigated, setHasNavigated] = useState(false);
+  const { loading } = useOutletContext(); 
 
   const hasLineBreak = project.title?.includes('<br/>');
 
@@ -40,7 +42,7 @@ const CaseImageDisplay = ({
         duration: 1.7
       });
     }
-  }, [isActive, index]);
+  }, [isActive, index, loading]);
 
 
   // Animation when cases transition
@@ -230,7 +232,7 @@ const CaseImageDisplay = ({
           ref={titleRef}
           dangerouslySetInnerHTML={{ __html: project.title }}
           onClick={handleCaseClick}
-          style={{cursor: 'pointer'}}
+          style={{cursor: 'pointer', transform: 'translate(0px, 450px)'}}
         />
       </div>
 

@@ -59,7 +59,7 @@ $z-indexes: (
 .text_syed { font-size: 200px; } 
 .text-maazPosit { right: 0px; top: 33.3%; }
 .text_maaz { font-size: 230px; }
-.text-hamidPosit { top: 50%; left: 0%;}
+.text-hamidPosit { top: 50%; left: 0%; z-index: map-get($z-indexes, header);}
 .text_hamid { font-size: 230px; letter-spacing: 3px; }
 .text-DescPosit {top: 290px; left: 30px; width: 400px; }
 .homeDesc { font-size: 34px; }
@@ -106,7 +106,7 @@ svg { display: block; }
 .case__figure { cursor: pointer; height: 100%; margin: 0; width: 100%; }
 .case__img { height: 100%; object-fit: contain; width: 100%;}
 .case__title-wrapper { cursor: pointer; display: flex; align-items: center; height: 240px;  justify-content: center; position: absolute; text-align: center; text-transform: uppercase; z-index: map-get($z-indexes, header);}
-.case__title { color: #fff; font-size: 14rem; line-height: 11rem;position: relative; transition: letter-spacing 1s cubic-bezier(0.87, 0, 0.13, 1); z-index: 2; &:hover {letter-spacing: 10px;} width: fit-content; z-index: map-get($z-indexes, header);}
+.case__title { color: #fff; font-size: 14rem; line-height: 11rem; position: relative; transition: letter-spacing 1s cubic-bezier(0.87, 0, 0.13, 1); &:hover {letter-spacing: 10px;} width: fit-content; z-index: map-get($z-indexes, header);}
 .case__image-center { display: flex; justify-content:  center; align-items: center; height: 100%; width: 100%; position: absolute; top: 0; left: 0; z-index: 1; pointer-events: none;}
 .page--cases { height: auto; overflow: hidden; position: relative; width: 100vw;}
 .fixed { position: fixed !important; opacity: 1 !important; visibility: visible !important; }

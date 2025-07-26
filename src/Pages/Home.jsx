@@ -61,7 +61,7 @@ const Home = () => {
               <img
                 src="/maaz-try.png"
                 alt="maazPic"
-                className="maaz_Pic max-w-none relative z-[3]"
+                className="maaz_Pic max-w-none relative "
               />
             </div>
           </div>
@@ -87,7 +87,7 @@ const Home = () => {
               </span>
             </h2>
 
-            <h2 className="text-hamidPosit absolute z-[3]">
+            <h2 className="text-hamidPosit absolute">
               <span
                 className=" relative inline-block overflow-hidden text_Contain"
                 style={getMovement(12, 8)}
@@ -98,7 +98,7 @@ const Home = () => {
               </span>
             </h2>
 
-            <h2 className="text-DescPosit absolute z-[3]">
+            <h2 className="text-DescPosit absolute">
               <span
                 className=" relative inline-block overflow-hidden descContain leading-none"
                 style={getMovement(12, 8)}
