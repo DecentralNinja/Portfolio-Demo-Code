@@ -115,12 +115,11 @@ svg { display: block; }
   width: 100vw; 
   opacity: 1; 
   z-index: 1; 
-  transition: opacity 0.3s ease-out; 
   pointer-events: none; 
   position: fixed; 
   top: 0; 
   left: 0;
-  will-change: opacity, transform;
+  will-change: transform;
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
 }  
@@ -224,7 +223,6 @@ body.preload .fixed { animation: none !important; transition: none !important; o
   opacity: 0; 
   visibility: hidden;
   transform: translateZ(0);
-  transition: opacity 0.2s ease-out, visibility 0.2s ease-out;
 }
 .case__clip { 
   clip-path: url(#cases-clippath);
