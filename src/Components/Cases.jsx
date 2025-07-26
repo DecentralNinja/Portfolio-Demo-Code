@@ -14,6 +14,18 @@ const Cases = () => {
   const [touchStartY, setTouchStartY] = useState(0); // k in Vue
   const wrapperRef = useRef(null); // a in Vue
   const timeoutRef = useRef(null); // h in Vue
+  
+  // Use refs to avoid closure issues - this is key!
+  const currentIndexRef = useRef(0);
+  const directionRef = useRef("next");
+
+  useEffect(() => {
+    currentIndexRef.current = currentIndex;
+  }, [currentIndex]);
+
+  useEffect(() => {
+    directionRef.current = direction;
+  }, [direction]);
 
   useEffect(() => {
     document.body.style.backgroundColor = cases[0].bgColor;
@@ -46,7 +58,7 @@ const Cases = () => {
     }
   };
 
-  // This matches the _ function in Vue exactly
+  // Fixed animation function - uses current values from refs
   const animateTransition = (dir, targetIdx = "") => {
     const timeline = gsap.timeline({
       onComplete: () => {
@@ -62,9 +74,12 @@ const Cases = () => {
           if (targetIdx !== "") {
             setCurrentIndex(targetIdx);
             setNextIndex(targetIdx + 1);
+            document.body.style.backgroundColor = cases[targetIdx].bgColor;
           } else {
-            setCurrentIndex(prev => prev + 1);
-            setNextIndex(prev => prev + 1);
+            const newIndex = currentIndexRef.current + 1;
+            setCurrentIndex(newIndex);
+            setNextIndex(newIndex + 1);
+            document.body.style.backgroundColor = cases[newIndex].bgColor;
           }
         } else {
           gsap.set(".shape", {
@@ -76,13 +91,15 @@ const Cases = () => {
           if (targetIdx !== "") {
             setCurrentIndex(targetIdx);
             setNextIndex(targetIdx - 1);
+            document.body.style.backgroundColor = cases[targetIdx].bgColor;
           } else {
-            setCurrentIndex(prev => prev - 1);
-            setNextIndex(prev => prev - 1);
+            const newIndex = currentIndexRef.current - 1;
+            setCurrentIndex(newIndex);
+            setNextIndex(newIndex - 1);
+            document.body.style.backgroundColor = cases[newIndex].bgColor;
           }
         }
         
-        document.body.style.backgroundColor = cases[targetIdx !== "" ? targetIdx : (dir === "next" ? currentIndex + 1 : currentIndex - 1)].bgColor;
         setupEventListeners();
       }
     });
@@ -118,40 +135,39 @@ const Cases = () => {
     }
   };
 
-  // This matches the L function in Vue exactly
   const jumpToCase = (targetIdx) => {
-    if (!isAnimating && targetIdx !== currentIndex) {
+    if (!isAnimating && targetIdx !== currentIndexRef.current) {
       setIsAnimating(true);
-      setDirection(targetIdx > currentIndex ? "next" : "prev");
+      setDirection(targetIdx > currentIndexRef.current ? "next" : "prev");
       setTargetIndex(targetIdx);
       setNextIndex(targetIdx);
-      animateTransition(targetIdx > currentIndex ? "next" : "prev", targetIdx);
+      animateTransition(targetIdx > currentIndexRef.current ? "next" : "prev", targetIdx);
       removeEventListeners();
     }
   };
 
-  // This matches the s function in Vue exactly
   const handleScroll = (e) => {
     if (typeof window !== 'undefined' && !isAnimating) {
       const isScrollDown = e.deltaY > 0 || (e.touches && e.touches[0].clientY < touchStartY);
+      const currentIdx = currentIndexRef.current;
       
       if (isScrollDown) {
-        if (currentIndex < cases.length - 1) {
+        if (currentIdx < cases.length - 1) {
           setIsAnimating(true);
           setDirection("next");
-          setTargetIndex(currentIndex + 1);
-          setNextIndex(currentIndex + 1);
+          setTargetIndex(currentIdx + 1);
+          setNextIndex(currentIdx + 1);
           animateTransition("next");
           removeEventListeners();
         } else {
           jumpToCase(0);
         }
       } else {
-        if (currentIndex > 0) {
+        if (currentIdx > 0) {
           setIsAnimating(true);
           setDirection("prev");
-          setNextIndex(currentIndex);
-          setTargetIndex(currentIndex - 1);
+          setNextIndex(currentIdx);
+          setTargetIndex(currentIdx - 1);
           animateTransition("prev");
           removeEventListeners();
         } else {
@@ -161,7 +177,6 @@ const Cases = () => {
     }
   };
 
-  // This matches the Q function in Vue exactly
   const handleTouchStart = (e) => {
     if (typeof window !== 'undefined' && e.touches && e.touches.length === 1) {
       setTouchStartY(e.touches[0].clientY);
